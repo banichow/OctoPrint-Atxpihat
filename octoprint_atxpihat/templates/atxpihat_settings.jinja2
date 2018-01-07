@@ -1,0 +1,148 @@
+<!--
+author - "Brian Anichowski"
+license - "Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/"
+copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.com"
+-->
+<form class="form-horizontal">
+
+    <h3>ATXhat configuration</h3>
+    <p>
+        You should not need to modify any of the GPIO pin designations. The ATXhat board is setup to run on specific GPIO pins in a <strong>BCM</strong>
+        configuration. Not the physical pins. <strong>Only Generation 2 and 3 boards are supported.</strong>
+    </p>
+    <h4>Emergency Power Off</h4>
+    <div class="accordion-inner">
+        <label class="checkbox">
+            <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.UseEPO" id="ATXHatEPOOnOff">Use EPO Port </input>
+        </label>
+        <div class="control-group">
+            <label class="control-label">EPO Pin</label>
+            <div class="controls">
+                <input type="number" min="0" class="input-mini" data-bind="value: settings.plugins.atxpihat.EPOPin"></input>&nbsp;(Default 15)
+            </div>
+        </div>
+    </div>
+
+    <h4>Monitor Fan RPM</h4>
+    <div class="accordion-inner">
+        <label class="checkbox">
+            <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.MonitorFanRPM" id="ATXHatMonitorFanRPM">Monitor Fan RPM</input>
+        </label>
+        <label class="checkbox">
+            <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.FanRPMFault" id="ATXHatFanRPMFault">Shutdown if not spinning</input>
+        </label>
+        <div class="control-group">
+            <label class="control-label">RPM Pin</label>
+            <div class="controls">
+                <input type="number" min="0" class="input-mini" data-bind="value: settings.plugins.atxpihat.FanRPMPin"></input>&nbsp;(Default 14)
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">Update(seconds)</label>
+            <div class="controls">
+                <input type="number" min="3" max="9" class="input-mini" data-bind="value: settings.plugins.atxpihat.FanTimer"></input>&nbsp;(Default 5)
+            </div>
+        </div>
+    </div>
+
+
+    <h4>LED Control</h4>
+    <p>Please note: Depending on LED cable, you may need to adjust which GPIO pins to move the correct color to the correct wire.</p>
+    <div class="accordion-inner">
+        <label class="checkbox">
+            <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.UseLEDS" id="ATXHatUseLEDS">Use LED Port</input>
+        </label>
+        <div class="control-group">
+            <label class="control-label">Red Pin</label>
+            <div class="controls">
+                <input type="number" min="0" class="input-mini" data-bind="value: settings.plugins.atxpihat.LEDRedPin"></input>&nbsp;(Default 23)
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">Green Pin</label>
+            <div class="controls">
+                <input type="number" min="0" class="input-mini" data-bind="value: settings.plugins.atxpihat.LEDGreenPin"></input>&nbsp;(Default 22)
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">Blue Pin</label>
+            <div class="controls">
+                <input type="number" min="0" class="input-mini" data-bind="value: settings.plugins.atxpihat.LEDBluePin"></input>&nbsp;(Default 24)
+            </div>
+        </div>
+    </div>
+
+    <h4>Switching Control</h4>
+    <div class="accordion-inner">
+        <label class="checkbox">
+            <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.PowerOffWarning" id="ATXHatPowerOffWarning">Power Off Warning(Default On)</input>
+        </label>
+        <div class="control-group">
+            <label class="control-label">On/Off GPIO Pin</label>
+            <div class="controls">
+                <input type="number" min="0" class="input-mini" data-bind="value: settings.plugins.atxpihat.OnOffSwitchPin"></input>&nbsp;(Default 17)
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">On Sense Pin</label>
+            <div class="controls">
+                <input type="number" min="0" class="input-mini" data-bind="value: settings.plugins.atxpihat.SenseOnOffPin"></input>&nbsp;(Default 18)
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">Update(seconds)</label>
+            <div class="controls">
+                <input type="number" min="3" max="9" class="input-mini" data-bind="value: settings.plugins.atxpihat.PSUTimer"></input>&nbsp;(Default 5)
+            </div>
+        </div>
+    </div>
+
+
+    <h4>Power Monitoring</h4>
+    <div class="accordion-inner">
+        <div class="control-group">
+            <label class="control-label">I2C address</label>
+            <div class="controls">
+                <input type="text" class="input-mini" size="4" data-bind="value: settings.plugins.atxpihat.i2cAddress"></input>&nbsp;(Default 0x68)
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">I2C Bus</label>
+            <div class="controls">
+                <input type="number" class="input-mini" min="1" max="2" data-bind="value: settings.plugins.atxpihat.i2cBus"></input>&nbsp;(Default 1)
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">Reference Voltage</label>
+            <div class="controls">
+                <input type="number" min="12.00" max="12.99" class="input-mini" data-bind="value: settings.plugins.atxpihat.ReferenceVoltage"></input>&nbsp;(Default 12.289)
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">Baseline Amperage</label>
+            <div class="controls">
+                <input type="number" class="input-mini" data-bind="value: settings.plugins.atxpihat.AmperageBaseline"></input>&nbsp;(Default .001)
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">Max Amperage</label>
+            <div class="controls">
+                <input type="number" min="1" max="20" class="input-mini" data-bind="value: settings.plugins.atxpihat.MaxAmperage"></input>&nbsp;(Default 15)
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label">Update(seconds)</label>
+            <div class="controls">
+                <input type="number" min="3" max="9" class="input-mini" data-bind="value: settings.plugins.atxpihat.VoltageTimer"></input>&nbsp;(Default 2)
+            </div>
+        </div>
+    </div>
+
+    <h4>Debugging</h4>
+    <div class="accordion-inner">
+       <label class="checkbox">
+            <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.debuglogging" id="ATXHatDebugLogging">Send Debug Logging to 'info'</input>
+        </label>
+    </div>
+
+</form>

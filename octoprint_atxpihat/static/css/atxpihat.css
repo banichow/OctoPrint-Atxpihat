@@ -1,0 +1,42 @@
+/*
+author - "Brian Anichowski"
+license - "Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/"
+copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.com"
+*/
+
+#LEDRedSlider .slider-selection {
+	background: red;
+}
+#LEDGreenSlider .slider-selection {
+	background: green;
+}
+#LEDBlueSlider .slider-selection {
+	background: blue;
+}
+
+#LEDred, #LEDgreen, #LEDblue, #LEDFinalRGB, #LEDFinalRGBCell{
+	width : 150px;
+}
+
+#LEDFinalRGBCell {
+	border: 1px solid black;
+}
+
+.atxButton {
+	width: 100px;
+}
+.atxCell
+{
+	padding-left: 10px;
+	height: 25px;
+}
+.atxCellSlider
+{
+	width: 255px;
+}
+
+.atxLabelCell
+{
+	width: 80px;
+}
+

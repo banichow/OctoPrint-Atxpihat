@@ -1,0 +1,41 @@
+<!--
+author - "Brian Anichowski"
+license - "Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/"
+copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.com"
+-->
+<a href="javascript:void(0)" title="EPO Enabled" id="EPODisplay" data-bind="visible : loginState.isUser()" style="display:none;">
+        <span data-bind="visible: global_settings.settings.plugins.atxpihat.UseEPO">
+        <span id="atxpihat_epostatus"><i class="fa fa-ban"></i></span>
+        <span>EPO</span>
+        </span>
+</a>
+
+<div id="epo_engaged_dialog" class="modal hide fade">
+    <div class="modal-header">
+        <a href="#" class="close" data-dismiss="modal" aria-hidden="true">&times;</a>
+        <h3>Notice</h3>
+    </div>
+    <div class="modal-body">
+        <p>
+            Emergency Power Off Engaged!
+        </p>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal" aria-hidden="true">{{ _('Dismiss') }}</a>
+    </div>
+</div>
+
+<div id="fan_rpm_shutdown_dialog" class="modal hide fade">
+    <div class="modal-header">
+        <a href="#" class="close" data-dismiss="modal" aria-hidden="true">&times;</a>
+        <h3>Notice</h3>
+    </div>
+    <div class="modal-body">
+        <p>
+            Emergency Power Off - Fan is not working or disconnected!
+        </p>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal" aria-hidden="true">{{ _('Dismiss') }}</a>
+    </div>
+</div>

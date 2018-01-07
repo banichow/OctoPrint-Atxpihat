@@ -1,0 +1,96 @@
+<!--
+author - "Brian Anichowski"
+license - "Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/"
+copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.com"
+-->
+<div data-bind="visible: !loginState.isUser()">
+    <h4>Logging to Gain Access</h4>
+</div>
+<div data-bind="visible: loginState.isUser()">
+    <div data-bind="visible: global_settings.settings.plugins.atxpihat.UseLEDS">
+        <h4>LED Control</h4>
+        <div class="accordion-inner">
+            <table>
+                <tr>
+                    <td class="atxCell atxLabelCell">Red</td>
+                    <td class="atxCell">:</td>
+                    <td class="atxCell atxCellSlider" colspan="2"><input type="number" data-slider-id='LEDRedSlider'
+                                                                         data-bind="slider: {min: 0, max: 255, step: 10, value: LEDRed, tooltip: 'hide'}"></input>
+                    </td>
+                    <td id="LEDFinalRGBCell" rowspan="4">
+                        &nbsp;
+                    </td>
+                </tr>
+                <tr>
+                    <td class="atxCell atxLabelCell">Green</td>
+                    <td class="atxCell">:</td>
+                    <td class="atxCell atxCellSlider" colspan="2"><input type="number" data-slider-id='LEDGreenSlider'
+                                                                         data-bind="slider: {min: 0, max: 255, step: 10, value: LEDGreen, tooltip: 'hide'}"></input>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="atxCell atxLabelCell">Blue</td>
+                    <td class="atxCell">:</td>
+                    <td class="atxCell atxCellSlider" colspan="2"><input type="number" data-slider-id='LEDBlueSlider'
+                                                                         data-bind="slider: {min: 0, max: 255, step: 10, value: LEDBlue, tooltip: 'hide'}"></input>
+                    </td>
+                </tr>
+                 <tr>
+                    <td class="atxCell atxLabelCell">Brightness</td>
+                    <td class="atxCell">:</td>
+                    <td class="atxCell atxCellSlider" colspan="2"><input type="number" data-slider-id='LEDBrightnessSlider'
+                                                                         data-bind="slider: {min: 0, max: 100, step: 5, value: LEDBrightness, tooltip: 'hide'}"></input>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="atxCell atxLabelCell">RGB</td>
+                    <td class="atxCell">:</td>
+                    <td class="atxCell">
+                        <strong><span id="LEDFinalRGB" data-bind="text: LEDRGBText"></span></strong>
+                    </td>
+                    <td class="atxCell">
+                        <button class="btn btn-block atxButton"
+                                data-bind="click: ResetLEDColors ">Reset
+                        </button>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div data-bind="visible: global_settings.settings.plugins.atxpihat.MonitorFanRPM">
+        <h4>Fan</h4>
+         <div class="accordion-inner">
+            <table>
+                <tr>
+                    <td class="atxCell atxLabelCell">RPM</td>
+                    <td class="atxCell">:</td>
+                    <td class="atxCell">
+                        <strong><span id="ATXHatFanRPMSpeed" data-bind="text: FanRPMText"></span></strong>
+                    </td>
+                </tr>
+            </table>
+         </div>
+    </div>
+    <div>
+        <h4>Power Monitor - 12v</h4>
+         <div class="accordion-inner">
+             <p>Please Note: There is always voltage leakage from the power supply. When the printer is powered down, it is not uncommon to see a small voltage and amperage reading.</p>
+            <table>
+                <tr>
+                    <td class="atxCell atxLabelCell">Voltage</td>
+                    <td class="atxCell">:</td>
+                    <td class="atxCell">
+                        <strong><span id="ATXHatVoltage" data-bind="text: ATXVoltage"></span></strong>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="atxCell atxLabelCell">Amperage</td>
+                    <td class="atxCell">:</td>
+                    <td class="atxCell">
+                        <strong><span id="ATXHatAmperage" data-bind="text: ATXAmperage"></span></strong>
+                    </td>
+                </tr>
+            </table>
+         </div>
+    </div>
+</div>

@@ -1,0 +1,49 @@
+<!--
+author - "Brian Anichowski"
+license - "Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/"
+copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.com"
+-->
+<a href="javascript:void(0)" title="Printer Power" class="dropdown-toggle" data-toggle="dropdown" data-bind="visible : loginState.isUser()" style="display:none;">
+    <span id="atxpihat_pwrstatus"><i class="fa fa-power-off"></i></span>
+    <span>Prt Power</span>
+    <b class="caret"></b>
+</a>
+<ul class="dropdown-menu">
+    <li><a id="atxpihat_pwronbutton" href="#" data-bind="click: StartATXHat" style="display:none;">On</a></li>
+    <li><a id="atxpihat_pwroffbutton" href="#" data-bind="click: ShutdownATXHat" style="display:none;">Off</a></li>
+</ul>
+
+
+<div id="ATXHatpoweroffconfirmation" class="modal hide fade">
+    <div class="modal-header">
+        <a href="#" class="close" data-dismiss="modal" aria-hidden="true">&times;</a>
+        <h3>ATXPiHat Power Control</h3>
+    </div>
+    <div class="modal-body">
+        <p>
+            Power Supply is currently ON.
+        </p>
+        <p>
+            {{ _('Are you sure you want to proceed?') }}
+        </p>
+    </div>
+    <div class="modal-footer">
+        <button class="btn" data-dismiss="modal" aria-hidden="true">{{ _('Cancel') }}</button>
+        <button class="btn btn-danger" data-bind="click: CallToShutdownATXHat">{{ _('Proceed') }}</button>
+    </div>
+</div>
+
+<div id="cannotstart_epo_engaged_dialog" class="modal hide fade">
+    <div class="modal-header">
+        <a href="#" class="close" data-dismiss="modal" aria-hidden="true">&times;</a>
+        <h3>Notice</h3>
+    </div>
+    <div class="modal-body">
+        <p>
+            Cannot start when the EPO is engaged!
+        </p>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal" aria-hidden="true">{{ _('Dismiss') }}</a>
+    </div>
+</div>
