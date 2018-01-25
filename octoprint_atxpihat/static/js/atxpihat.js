@@ -42,6 +42,36 @@ $(function () {
         });
     }
 
+    function ProcessExtSwitchValue(pwmvalue)
+    {
+        if (pwmvalue == undefined)
+            return;
+
+        $.ajax({
+            url: API_BASEURL + "plugin/atxpihat",
+            type: "POST",
+            dataType: "json",
+            data: JSON.stringify({
+                command: "updateExtSwitch",
+                ExternalSwitchValue: pwmvalue
+            }),
+            contentType: "application/json; charset=UTF-8"
+        });
+    }
+
+    function ToggleExtSwitch()
+    {
+        $.ajax({
+            url: API_BASEURL + "plugin/atxpihat",
+            type: "POST",
+            dataType: "json",
+            data: JSON.stringify({
+                command: "ToggleExtSwitch"
+            }),
+            contentType: "application/json; charset=UTF-8"
+        });
+    }
+
     function ResetLEDSlider(LEDSliderTag, percent) {
         $(LEDSliderTag).find("div.slider-selection").css('width', percent + '%');
         $(LEDSliderTag).find("div.slider-handle").css('left', percent + '%');
@@ -61,9 +91,12 @@ $(function () {
         self.LEDGreen = ko.observable();
         self.LEDBlue = ko.observable();
         self.LEDBrightness = ko.observable();
+        self.ExtSwitchValue = ko.observable();
         self.FanRPMText = ko.observable();
         self.ATXVoltage = ko.observable();
         self.ATXAmperage = ko.observable();
+        self.extswitchtype = ko.observable();
+        self.CurrentExtSwitchState = ko.observable();
 
         self.StartATXHat = function ()  {
             $.ajax({
@@ -99,6 +132,18 @@ $(function () {
             }
         };
 
+        self.ResetExtSwitchValue =
+            function () {
+               ResetLEDSlider("#ExtSwitchSlider",100);
+               self.ExtSwitchValue(255);
+               ProcessExtSwitchValue(255);
+            };
+
+        self.ToggleExtSwitch = function()
+        {
+            ToggleExtSwitch();
+        }
+
         self.ResetLEDColors =
             function () {
                 ResetLEDSlider("#LEDBlueSlider",0);
@@ -112,6 +157,14 @@ $(function () {
                 ProcessLEDColors(0, 0, 0, 100);
             };
 
+        self.ExtSwitchText = ko.computed(function() {
+            return self.ExtSwitchValue();
+        });
+
+        self.ExtSwitchValue.subscribe(function ()
+        {
+            ProcessExtSwitchValue(self.ExtSwitchValue());
+        });
 
         self.LEDRGBText = ko.computed(function () {
             return self.LEDRed() + ", " + self.LEDGreen() + ", " + self.LEDBlue();
@@ -155,11 +208,6 @@ $(function () {
                     }
                 }
 
-                //If power on and EPO engaged fault
-                if (data.msg.toLowerCase() == "csepoengaged") {
-                    $('#cannotstart_epo_engaged_dialog').modal("show");
-                }
-
                 // Refresh printer connections
                 if (data.msg.toLowerCase() == "refreshconnection") {
                     self.cvm.requestData();
@@ -190,6 +238,7 @@ $(function () {
                     var epostatus = $('#atxpihat_epostatus');
                     var epoengaged = $('#epo_engaged_dialog');
                     if (data.field1.toLowerCase() == 'true') {
+
                         epoengaged.modal("show");
                         epostatus.css('color', 'red');
                     }
@@ -197,6 +246,18 @@ $(function () {
                         epostatus.css('color', 'black');
                     }
                     return;
+                }
+
+                if (data.msg.toLowerCase() == "extswitchpinstate") {
+                    var togglebutton = $('#atxpihat_toggleextswitch');
+                    if (data.field1.toLowerCase() == 'true') {
+                        self.CurrentExtSwitchState('ON')
+                        togglebutton.text('Turn Off');
+                    }
+                    else {
+                        self.CurrentExtSwitchState('OFF')
+                        togglebutton.text('Turn On');
+                    }
                 }
             }
         };
@@ -208,8 +269,11 @@ $(function () {
             self.LEDGreen(self.atxsettings.LEDGreen());
             self.LEDBlue(self.atxsettings.LEDBlue());
             self.LEDBrightness(self.atxsettings.LEDBrightness());
+            self.ExtSwitchValue(self.atxsettings.ExternalSwitchValue());
+            self.extswitchtype(self.atxsettings.ExternalSwitchBehaviour());
 
             ProcessLEDColors(self.LEDRed(), self.LEDGreen(), self.LEDBlue(), self.LEDBrightness());
+            ProcessExtSwitchValue(self.ExtSwitchValue());
         };
 
         self.onAfterBinding = function() {
@@ -226,3 +290,4 @@ $(function () {
     ]);
 
 });
+

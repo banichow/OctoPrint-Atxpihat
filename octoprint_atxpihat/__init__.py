@@ -14,6 +14,7 @@ from __future__ import absolute_import
 
 __author__ = "Brian Anichowski"
 __license__ = "Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/"
+__plugin_license__ = "Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/"
 __copyright__ = "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.com"
 __plugin_name__ = "ATXPiHat"
 __plugin_version__ = "1.0.0"
@@ -58,7 +59,11 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		self._i2cinterface = False
 		self._smbus = None
 		self._eporisecallback = None
-
+		self._checkPSUTimer = None
+		self._checkFanTimer = None
+		self._checkVoltageTimer = None
+		self._checkExtSwitchTimer = None
+		self._currentExtSwitchState = False
 
 	def _mylogger(self,message, forceinfo=False):			# this is to be able to change the logging without a large change
 
@@ -129,6 +134,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 							# sense the change to refresh the connection
 			self._plugin_manager.send_plugin_message(self._identifier, dict(msg="refreshconnection"))
 			self.initialize_fan()
+			self.initialize_extswitch()
 
 	def turnoff(self):
 		self._mylogger('ATXPiHat - turnoff called')
@@ -139,9 +145,9 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 
 		sensepwrpin = self._pigpiod.read(self._settings.getInt(['SenseOnOffPin']))
 		self._mylogger('ATXPiHat - Current sense pin %s ' % sensepwrpin)
-		if sensepwrpin == 1:
 
-			self.shutdown_fan_monitor()
+		if sensepwrpin == 1:
+			self.toggle_extswitch(True)
 
 			if self._printer.is_printing():
 				self._printer.cancel_print(self._printer)
@@ -166,6 +172,101 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		retval = "true" if sensepwrpin == 1 else "false"
 		self._plugin_manager.send_plugin_message(self._identifier, dict(msg="pwrstatus", field1=retval))
 
+	def initialize_extswitch(self):
+		self._mylogger("ATXPiHat initialize_extswitch")
+		extswtpin = self._settings.getInt(['ExternalSwitchPin'])
+
+		self._pigpiod.set_mode(extswtpin, pigpio.OUTPUT)
+		actualstate = self._settings.getBoolean(['InitExtSwitchOn'])
+		#UseExtSwitch
+		if self._settings.getBoolean(['UseExtSwitch']):
+			if self._settings.get(['ExternalSwitchBehaviour']).upper() == 'ONOFF':
+
+				self._pigpiod.set_pull_up_down(extswtpin, pigpio.PUD_UP)
+				if actualstate:
+					self._pigpiod.write(extswtpin,1)
+				else:
+					self._pigpiod.write(extswtpin, 0)
+
+			else:
+				self._pigpiod.set_pull_up_down(extswtpin, pigpio.PUD_OFF)
+				pwmvalue = self._settings.getInt(['ExternalSwitchValue'])
+
+				if pwmvalue > 255:
+					pwmvalue = 255
+				elif pwmvalue < 0:
+					pwmvalue = 0
+
+				self._mylogger(u"Ext Switch pwmcycle %s " % pwmvalue)
+				# InitExtSwitchOn
+				if actualstate:
+					self._pigpiod.set_PWM_dutycycle(extswtpin, pwmvalue)
+				else:
+					self._pigpiod.set_PWM_dutycycle(extswtpin, 0)
+		else:
+
+			self._pigpiod.set_PWM_dutycycle(extswtpin, 0)
+			self._pigpiod.set_pull_up_down(extswtpin, pigpio.PUD_OFF)
+			self._pigpiod.write(extswtpin, 0)
+
+	def toggle_extswitch(self, forceoff=False):
+		self._mylogger("ATXPiHat toggle_extswitch called",True)
+		sensepwrpin = self._pigpiod.read(self._settings.getInt(['SenseOnOffPin']))
+
+		if sensepwrpin == 1 or forceoff:
+			extswtpin = self._settings.getInt(['ExternalSwitchPin'])
+			pwmvalue = self._settings.getInt(['ExternalSwitchValue'])
+
+			if self._settings.getBoolean(['UseExtSwitch']):
+				if self._settings.get(['ExternalSwitchBehaviour']).upper() == 'ONOFF':
+					self._mylogger(" pin state %s " % self._pigpiod.read(extswtpin))
+					if self._pigpiod.read(extswtpin) > 0:
+						self._pigpiod.write(extswtpin,0)
+						self._pigpiod.set_pull_up_down(extswtpin, pigpio.PUD_OFF)
+					else:
+						self._pigpiod.write(extswtpin, 1)
+						self._pigpiod.set_pull_up_down(extswtpin, pigpio.PUD_UP)
+				else:
+					self._mylogger(" PWM duty cycle - %s " % self._pigpiod.get_PWM_dutycycle(extswtpin))
+					if self._pigpiod.get_PWM_dutycycle(extswtpin) > 0:
+						self._pigpiod.set_pull_up_down(extswtpin, pigpio.PUD_OFF)
+						self._pigpiod.write(extswtpin, 0)
+						pwmvalue = 0
+					else:
+						if pwmvalue > 255:
+							pwmvalue = 255
+
+					self._mylogger(u"Ext Switch pwmcycle %s " % pwmvalue)
+					self._pigpiod.set_PWM_dutycycle(extswtpin, pwmvalue)
+
+	def update_extswitchstate(self):
+		self._mylogger("ATXPiHat update_extswitchstate called")
+
+		extswtpin = self._settings.getInt(['ExternalSwitchPin'])
+		sensepwrpin = self._pigpiod.read(self._settings.getInt(['SenseOnOffPin']))
+
+		if sensepwrpin == 1:
+			if self._settings.getBoolean(['UseExtSwitch']):
+				if self._settings.get(['ExternalSwitchBehaviour']).upper() == 'ONOFF':
+					self._mylogger(" pin state %s " % self._pigpiod.read(extswtpin))
+					if self._pigpiod.read(extswtpin) > 0:
+						self._currentExtSwitchState = True
+					else:
+						self._currentExtSwitchState = False
+				else:
+					self._mylogger(" PWM duty cycle - %s " % self._pigpiod.get_PWM_dutycycle(extswtpin))
+					if self._pigpiod.get_PWM_dutycycle(extswtpin) > 0:
+						self._currentExtSwitchState = True
+					else:
+						self._currentExtSwitchState = False
+		else:
+			self._currentExtSwitchState = False
+
+		self._plugin_manager.send_plugin_message(self._identifier,
+												 dict(msg="extswitchpinstate",
+													  field1='true' if self._currentExtSwitchState else 'false',
+													  field2=""))
+
 	def initialize_epo(self):
 		# due to design, I cannot sense the EPO pin properly until 12v is applied to the board
 		# this is just setting the port up
@@ -175,14 +276,18 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 			self._eporisecallback.cancel()
 
 		self._pigpiod.set_mode(epopin, pigpio.INPUT)
+		self._pigpiod.set_glitch_filter(epopin, 400)
 		self._pigpiod.set_pull_up_down(epopin, pigpio.PUD_UP)
-		self._eporisecallback = self._pigpiod.callback(epopin, pigpio.EITHER_EDGE, self.epostatechange)
 		self.setepostatus(False)  # go set the default status of the EPO to on and "black"
+		self._eporisecallback = self._pigpiod.callback(epopin, pigpio.EITHER_EDGE, self.epostatechange)
 
 	def epostatechange(self, gpio, level, tick):
 		self._mylogger("ATXPiHat epostatechange")
 
-		sensepwrpin = self._pigpiod.read(self._settings.getInt(['SenseOnOffPin']))
+		sensepwrpin = self._settings.getInt(['SenseOnOffPin'])
+		if self._pigpiod.read(sensepwrpin) == 0:
+			return
+
 		currentepostate = self._pigpiod.read(gpio)
 
 		if self._settings.getInt(['UseEPO']):
@@ -196,14 +301,13 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 				self._mylogger("ATXPiHat - EPO released", forceinfo=True)
 				self.setepostatus(False)
 
-
 	def setepostatus(self, currentstate):
 		#true = engaged or 0
 		#false = normal or 1
-		self._mylogger("ATXPiHat set_epo_status")
+		self._mylogger("ATXPiHat set_epo_status %s" % currentstate)
 		self._plugin_manager.send_plugin_message(self._identifier,
 												 dict(msg="epoengaged",
-													  field1="true" if not currentstate else "false",
+													  field1='true' if currentstate else 'false',
 													  field2=""))
 
 	def initialize_fan(self):
@@ -213,13 +317,6 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 			self._fanmonitor.cancel()
 
 		self._fanmonitor = MonitorPWM.MonitorPWM(self._pigpiod, self._settings.getInt(['FanRPMPin']), self._mylogger)
-
-	def shutdown_fan_monitor(self):
-		self._mylogger("ATXPiHat shutdown_fan_monitor called")
-
-		if self._fanmonitor is not None:
-			self._plugin_manager.send_plugin_message(self._identifier, dict(msg="fanrpm", field1=0))
-			self._fanmonitor.cancel()
 
 	def check_fan_state(self):
 		self._mylogger("ATXPiHat check_fan_state called")
@@ -237,6 +334,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 			rpm = 0
 			if self._fanmonitor is not None:
 				rpm = self._fanmonitor.rpm()
+				self._mylogger("ATXPiHat check_fan_state - rpm %s" % rpm)
 				self._plugin_manager.send_plugin_message(self._identifier, dict(msg="fanrpm", field1=rpm))
 
 				self._mylogger(U'fan rpm - %s ' % rpm)
@@ -253,7 +351,6 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 					self._mylogger(u'Fan fault detected', forceinfo=True)
 					self._plugin_manager.send_plugin_message(self._identifier, dict(msg="fanrpmfault", field1='true'))
 					self.turnoff()
-
 
 	def initialize_power(self):
 		self._mylogger("ATXPiHat initialize_power")
@@ -272,11 +369,13 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		self._i2cinterface = True
 
 	def process_voltage(self):
-		self._mylogger("process_voltage - called")
-		resamp = MCP342x.MCP342x.convert_and_read(self._amperage_ch0, samples=8, sleep=False)
+		self._mylogger("ATXPiHat process_voltage - called")
+		resamp = MCP342x.MCP342x.convert_and_read(self._amperage_ch0, samples=6, sleep=False)
+		self._mylogger("ATXPiHat process_voltage - amp sample %s " % resamp)
 		amperage = round(((ATXPiHat._processsamples(resamp) - self._settings.getFloat(['AmperageBaseline'])) * 1000) * 2,3)
 
-		resvolt = MCP342x.MCP342x.convert_and_read(self._voltage_ch1, samples=8, sleep=False)
+		resvolt = MCP342x.MCP342x.convert_and_read(self._voltage_ch1, samples=6, sleep=False)
+		self._mylogger("ATXPiHat process_voltage - volt sample %s " % resvolt)
 		voltage =  round(( self._settings.getFloat(['ReferenceVoltage']) * ATXPiHat._processsamples(resvolt)), 2)
 
 		self._plugin_manager.send_plugin_message(self._identifier, dict(msg="atxvolts", field1=amperage, field2=voltage))
@@ -298,39 +397,64 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		if not self._pigpiod.connected:
 			self._pigpiod = pigpio.pi()
 
+		self.initialize_all()
+
+	@staticmethod
+	def _settimer(timervar, timeval, methodcall):
+
+		if timervar is not None:
+			timervar.cancel()
+
+		worktimer = RepeatedTimer(timeval, methodcall, None, None, True)
+		worktimer.start()
+
+		return worktimer
+
+	def initialize_all(self):
 		self.initialize_power()
 		self.initialize_leds()
 		self.initialize_fan()
 		self.initialize_epo()
+		self.initialize_extswitch()
 
+		processtimer = self._settings.getInt(['ProcessTimer'])
+
+		#Multiple timers to get some multithreading out of it.
 		# Power status monitor
-		self._checkPSUTimer = RepeatedTimer(self._settings.getInt(['PSUTimer']), self.check_psu_state, None, None, True)
-		self._checkPSUTimer.start()
+		self._checkPSUTimer = ATXPiHat._settimer(self._checkPSUTimer,processtimer, self.check_psu_state)
 
 		# Fan status processing
-		self._checkFanTimer = RepeatedTimer(self._settings.getInt(['FanTimer']), self.check_fan_state, None, None, True)
-		self._checkFanTimer.start()
+		self._checkFanTimer = ATXPiHat._settimer(self._checkFanTimer,processtimer, self.check_fan_state)
 
 		# Voltage/Amp status processing
-		self._checkVoltageTimer = RepeatedTimer(self._settings.getInt(['VoltageTimer']), self.process_voltage, None, None, True)
-		self._checkVoltageTimer.start()
+		self._checkVoltageTimer = ATXPiHat._settimer(self._checkVoltageTimer, processtimer, self.process_voltage)
 
+		# External Switch State
+		self._checkExtSwitchTimer = ATXPiHat._settimer(self._checkExtSwitchTimer, processtimer, self.update_extswitchstate)
 
 	def get_settings_defaults(self):
 		self._mylogger(u"ATXPiHat get_settings_default()")
-		return dict(LEDRed=0,
+		return dict(BoardVersion="1.00",
+					LEDRed=0,
 					LEDGreen=0,
 					LEDBlue=0,
 					LEDRedPin=23,
 					LEDGreenPin=22,
 					LEDBluePin=24,
 					EPOPin=15,
+					ExternalSwitchPin=27,
+					ExternalSwitchValue=255,
+					ExternalSwitchBehaviour='ONOFF',
+					ExternalSwitchTriggerOn='M355 S1',
+					ExternalSwitchTriggerOff='M355 S0',
+					InitExtSwitchOn=True,
 					debuglogging=False,
 					OnOffSwitchPin=17,
 					SenseOnOffPin=18,
 					LEDBrightness=100,
 					UseEPO=False,
 					UseLEDS=False,
+					UseExtSwitch=False,
 					PowerOffWarning=True,
 					enablePowerOffWarningDialog=False,
 					MonitorFanRPM=False,
@@ -340,19 +464,21 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 					i2cBus=1,					#we are using gpio pins 2 and 3
 					ReferenceVoltage=12.289,
 					AmperageBaseline=.001,
-					PSUTimer = 5,
-					FanTimer = 5,
-					VoltageTimer = 2,
+					ProcessTimer = 2,
 					MaxAmperage=15)
 
 	def on_settings_save(self, data):
 		self._mylogger(u"ATXPiHat on_settings_save()")
+		# Cannot update the screen faster than every 2 seconds
+		# The amperage and voltage readings can take some time to come back
 		octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
 
-		self.initialize_power()
-		self.initialize_leds()
-		self.initialize_fan()
-		self.initialize_epo()
+		self._mylogger(u"ATXPiHat on_settings_save() before - Processtimer %s" % self._settings.getInt(['ProcessTimer']))
+		if self._settings.getInt(['ProcessTimer']) < 2:
+			self._settings.setInt(['ProcessTimer'],2)
+
+		self.initialize_all()
+		self._mylogger(u"ATXPiHat on_settings_save() after - Processtimer %s" % self._settings.getInt(['ProcessTimer']))
 
 	def get_template_configs(self):
 		self._mylogger(u"ATXPiHat get_template_configs()")
@@ -367,8 +493,10 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		self._mylogger(u"ATXPiHat get_api_command()")
 		return dict(
 			updateLED=['LEDRed', 'LEDGreen', 'LEDBlue', 'LEDBrightness'],
+			updateExtSwitch=['ExternalSwitchValue'],
 			turnATXPSUOn=[],
-			turnATXPSUOff=[]
+			turnATXPSUOff=[],
+			ToggleExtSwitch=[]
 		)
 
 	def on_api_command(self, command, data):
@@ -377,6 +505,10 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		if not user_permission.can():
 			return make_response("Insufficient rights", 403)
 
+		if command.lower() == "toggleextswitch":
+			self._mylogger("Toggle External Switch")
+			self.toggle_extswitch()
+
 		if command.lower() == 'turnatxpsuoff':
 			self._mylogger("Turned Off Supply")
 			self.turnoff()
@@ -384,6 +516,13 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		elif command.lower() == 'turnatxpsuon':
 			self._mylogger("Turned On Supply")
 			self.turnon()
+
+		elif command.lower() == 'updateextswitch':
+			self._mylogger("Update External Switch PWM value")
+			data.pop('command', 0)
+			self._settings.set(['ExternalSwitchValue'], int(data['ExternalSwitchValue']))
+			self._settings.save()
+			self.initialize_extswitch()
 
 		elif command.lower() == 'updateled' and self._settings.getBoolean(['UseLEDS']):
 			if data['LEDRed'] > -1 and data['LEDGreen'] > -1 and data['LEDBlue'] > -1:
@@ -413,28 +552,37 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		self._mylogger(u"ATXPiHat get_settings_version()")
 		return 2
 
-	def hook_gcode_queuing(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
-		return
+	def HandleMarlin(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
+		self._mylogger(u"ATXPiHat HandleMarlin()")
+
+		workcmd = cmd.upper()
+
+		if gcode:
+			if workcmd.startswith("M150"):
+				self._mylogger("LED command encounter - %s" % cmd)
+
+			if workcmd.startswith(self._settings.get(['ExternalSwitchTriggerOn']).upper()):
+				self._mylogger("Ext Switch On command encounter - %s" % cmd)
+
+			if workcmd.startswith(self._settings.get(['ExternalSwitchTriggerOff']).upper()):
+				self._mylogger("Ext Switch Off command encounter - %s" % cmd)
 
 	def get_update_information(self):
-		return
+		return dict(
+			psucontrol=dict(
+				displayName="ATXPiHat",
+				displayVersion=self._plugin_version,
 
+				# version check: github repository
+				type="github_release",
+				user="banichow",
+				repo="OctoPrint-Atxpihat",
+				current=self._plugin_version,
 
-#		return dict(
-#			psucontrol=dict(
-#				displayName="ATXPiHat Control",
-#				displayVersion=self._plugin_version,
-#
-#				# version check: github repository
-#				type="github_release",
-#				user="kantlivelong",
-#				repo="OctoPrint-ATXPiHatControl",
-#				current=self._plugin_version,
-#
-#				# update method: pip w/ dependency links
-#				pip="https://github.com/kantlivelong/OctoPrint-PSUControl/archive/{target_version}.zip"
-#			)
-#		)
+				# update method: pip w/ dependency links
+				pip="https://github.com/banichow/OctoPrint-Atxpihat/archive/{target_version}.zip"
+			)
+		)
 
 
 def __plugin_load__():
@@ -443,7 +591,7 @@ def __plugin_load__():
 
 	global __plugin_hooks__
 	__plugin_hooks__ = {
-		#"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
-		"octoprint.comm.protocol.gcode.queuing": __plugin_implementation__.hook_gcode_queuing
+		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
+		"octoprint.comm.protocol.gcode.queuing": __plugin_implementation__.HandleMarlin
 
 	}

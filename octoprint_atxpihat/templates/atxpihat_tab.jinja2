@@ -35,7 +35,7 @@ copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.co
                                                                          data-bind="slider: {min: 0, max: 255, step: 10, value: LEDBlue, tooltip: 'hide'}"></input>
                     </td>
                 </tr>
-                 <tr>
+                <tr>
                     <td class="atxCell atxLabelCell">Brightness</td>
                     <td class="atxCell">:</td>
                     <td class="atxCell atxCellSlider" colspan="2"><input type="number" data-slider-id='LEDBrightnessSlider'
@@ -57,9 +57,50 @@ copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.co
             </table>
         </div>
     </div>
+
+    <div data-bind="visible: global_settings.settings.plugins.atxpihat.UseExtSwitch">
+        <h4>External Switch Control</h4>
+        <div class="accordion-inner">
+            <table>
+                <tr>
+                    <td class="atxCell atxLabelCell">State:</td>
+                    <td class="atxCell">:</td>
+                    <td class="atxCell">
+                        <strong><span id="ATXHatFanRPMSpeed" data-bind="text: CurrentExtSwitchState"></span></strong>
+                    </td>
+                    <td class="atxCell">
+                        <button id="atxpihat_toggleextswitch" class="btn btn-block atxButton" data-bind="click: ToggleExtSwitch">Turn On</button>
+                    </td>
+                </tr>
+                <!-- ko if: global_settings.settings.plugins.atxpihat.ExternalSwitchBehaviour() === 'VARIABLE' -->
+                <tr>
+                    <td class="atxCell atxLabelCell">Value</td>
+                    <td class="atxCell">:</td>
+                    <td class="atxCell atxCellSlider" colspan="2"><input type="number" data-slider-id='ExtSwitchSlider'
+                                                                         data-bind="slider: {min: 0, max: 255, step: 5, value: ExtSwitchValue, tooltip: 'hide'}"></input>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="atxCell atxLabelCell">PWM Value</td>
+                    <td class="atxCell">:</td>
+                    <td class="atxCell">
+                        <strong><span id="FinalExtSwitchValue" data-bind="text: ExtSwitchText"></span></strong>
+                    </td>
+                    <td class="atxCell">
+                        <button class="btn btn-block atxButton" data-bind="click: ResetExtSwitchValue">Reset</button>
+                    </td>
+                </tr>
+                <!-- /ko -->
+            </table>
+
+
+        </div>
+    </div>
+
+
     <div data-bind="visible: global_settings.settings.plugins.atxpihat.MonitorFanRPM">
         <h4>Fan</h4>
-         <div class="accordion-inner">
+        <div class="accordion-inner">
             <table>
                 <tr>
                     <td class="atxCell atxLabelCell">RPM</td>
@@ -69,12 +110,12 @@ copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.co
                     </td>
                 </tr>
             </table>
-         </div>
+        </div>
     </div>
     <div>
         <h4>Power Monitor - 12v</h4>
-         <div class="accordion-inner">
-             <p>Please Note: There is always voltage leakage from the power supply. When the printer is powered down, it is not uncommon to see a small voltage and amperage reading.</p>
+        <div class="accordion-inner">
+            <p>Please Note: There is always voltage leakage from the power supply. When the printer is powered down, it is not uncommon to see a small voltage and amperage reading.</p>
             <table>
                 <tr>
                     <td class="atxCell atxLabelCell">Voltage</td>
@@ -91,6 +132,6 @@ copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.co
                     </td>
                 </tr>
             </table>
-         </div>
+        </div>
     </div>
 </div>
