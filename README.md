@@ -1,6 +1,19 @@
 # OctoPrint-Atxpihat
 
-**TODO:** Describe what your plugin does.
+Initial software release to support the v1.0 ATXPiHat. A lot of the features below come disabled and are easily enabled on the settings tab. Here is the hardware/software features;
+
+* Supports Raspberry Pi v3
+* Direct 24 pin ATX connection to the Pi
+* Powers the Pi from the ATX supply in standby
+* Remote printer power On/Off
+* Graceful handles Octoprint connection reset and shutdown, dynamic UI updating
+* Emergency Power Off
+* 12v RGB LED control
+* Monitor 12v amperage and voltage
+* Available 5v for other external power requirements
+* Emergency Amperage overflow shutdown (Not fully implemented at this time)
+* 12v cooling fan control and monitoring
+* Switchable 12v or 5v - static, dimmable(pwm)
 
 ## Setup
 
@@ -9,9 +22,8 @@ or manually using this URL:
 
     https://github.com/banichow/OctoPrint-Atxpihat/archive/master.zip
 
-**TODO:** Describe how to install your plugin, if more needs to be done than just installing it via pip or through
-the plugin manager.
+This plugin requires the pigpio library from joan@abyz.me.uk - http://abyz.co.uk/rpi/pigpio/python.html . Currently there is no pip installer for this library on the pi. Additionally, the standard installation does not setup pigpiod as a service. There are several available install scripts to do this, here is one implementation that I recommend. https://github.com/banichow/pigpioinstall 
 
-## Configuration
+This has to be **installed prior** to installing this plugin. smbus2 and RPi.GPIO are installed normally as a part of the plugin installation. 
 
-**TODO:** Describe your plugin's configuration options (if any).
+This plugin is only supported on the Raspberry Pi 3, and has been tested on the Model B. At the time of development, we were unable to get any older version 3 boards for testing.
