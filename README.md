@@ -27,3 +27,15 @@ This plugin requires the pigpio library from joan@abyz.me.uk - http://abyz.co.uk
 This has to be **installed prior** to installing this plugin. smbus2 and RPi.GPIO are installed normally as a part of the plugin installation. 
 
 This plugin is only supported on the Raspberry Pi 3, and has been tested on the Model B. At the time of development, we were unable to get any older version 3 boards for testing.
+
+## Credits and Contributions
+
+* ATXPiHat Hardware - Steve Smith - Xygax - https://www.facebook.com/Xygax
+* PSUControl - Shawn Bruce - https://github.com/kantlivelong/
+* LEDStripControl - https://github.com/google/OctoPrint-LEDStripControl
+* pigpio - joan@abyz.me.uk - http://abyz.co.uk/rpi/pigpio/python.html
+* mcp342x - s.marple@lancaster.ac.uk - Steve Marple - https://github.com/stevemarple/python-MCP342x
+* Gina Häußge <gina@octoprint.org>
+
+## Licensing
+Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/
