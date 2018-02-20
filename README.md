@@ -56,7 +56,6 @@ Do not install the plugin until you have completed the installation steps below;
 * PSUControl - Shawn Bruce - https://github.com/kantlivelong/
 * LEDStripControl - https://github.com/google/OctoPrint-LEDStripControl
 * pigpio - joan@abyz.me.uk - http://abyz.co.uk/rpi/pigpio/python.html
-* mcp342x - s.marple@lancaster.ac.uk - Steve Marple - https://github.com/stevemarple/python-MCP342x
 * Gina Häußge <gina@octoprint.org>
 
 ## Licensing

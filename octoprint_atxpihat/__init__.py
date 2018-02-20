@@ -6,10 +6,6 @@ from __future__ import absolute_import
 # PSUControl - Shawn Bruce - https://github.com/kantlivelong/
 # LEDStripControl - https://github.com/google/OctoPrint-LEDStripControl
 # pigpio - joan@abyz.me.uk - http://abyz.co.uk/rpi/pigpio/python.html
-# mcp342x - s.marple@lancaster.ac.uk - Steve Marple - https://github.com/stevemarple/python-MCP342x
-#		    This is included with the plugin to handle an installation issue with what version of smbus
-#		    we are using. We are using smbus2, not smbus-cffi. smbus2 as far as I can tell
-#           the current library and has the best documentation
 # ***************************************************************************************
 
 __author__ = "Brian Anichowski"
@@ -17,7 +13,7 @@ __license__ = "Creative Commons Attribution-ShareAlike 4.0 International License
 __plugin_license__ = "Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/"
 __copyright__ = "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.com"
 __plugin_name__ = "ATXPiHat"
-__plugin_version__ = "1.0.4"
+__plugin_version__ = "1.0.5"
 __plugin_description__ = "ATXPiHat - http://www.baprojectworkshop.com"
 
 import RPi.GPIO as GPIO
@@ -25,10 +21,9 @@ import logging
 import octoprint.plugin
 from octoprint.server import user_permission
 import pigpio
-import smbus2 as smbus
 import time
 import thread
-from . import MonitorPWM, MCP342x
+from . import MonitorPWM, ADCProcessor
 from threading import Thread
 from flask import make_response
 from octoprint.util import RepeatedTimer
@@ -49,21 +44,22 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		revision = GPIO.RPI_REVISION
 
 		if revision <> 2 and revision <> 3:
-			self._mylogger(u'ATXPiHat does not support Type 1 boards', forceinfo=True)
+			self._mylogger('ATXPiHat does not support Type 1 boards', forceinfo=True)
 			raise EnvironmentError('ATXPiHat does not support Type 1 boards')
 		else:
-			self._mylogger(u'ATXPiHat BCM board is type - %s' % self._pigpiod.get_hardware_revision(), forceinfo=True)
+			self._mylogger('ATXPiHat BCM board is type - %s' % self._pigpiod.get_hardware_revision(), forceinfo=True)
 
+		self._ampbaseline = None
 		self._ledcolors = dict(LEDRed=None, LEDGreen=None, LEDBlue=None)
 		self._fanmonitor = None
-		self._i2cinterface = False
-		self._smbus = None
+		self._adc = None
 		self._eporisecallback = None
 		self._checkPSUTimer = None
 		self._checkFanTimer = None
 		self._checkVoltageTimer = None
 		self._checkExtSwitchTimer = None
 		self._currentExtSwitchState = False
+		self._ampbaseline = 2.048
 
 	def _mylogger(self,message, forceinfo=False):			# this is to be able to change the logging without a large change
 
@@ -75,35 +71,45 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		else:
 			print(message)
 
-	def initialize_leds(self):
-		self._mylogger(u"ATXPiHat initialize_leds()")
+	def setLEDSvalues(self, workingleds, brightness):
+		self._mylogger("ATXPiHat setLEDSvalues() - {} - {}".format(workingleds,brightness))
 
 		if self._settings.getBoolean(['UseLEDS']):
 			ledon = True
 		else:
 			ledon = False
 
-		for key, value in self._ledcolors.iteritems():
+		for key, value in workingleds.iteritems():
 			newkey = key + 'Pin'
-			keyval = self._settings.getInt([key])
-			ledbrightness = self._settings.getInt(['LEDBrightness'])
 
-			if ledbrightness > 99:
-				ledbrightness = 100
-			elif ledbrightness < 1:
-				ledbrightness = 1
+			if brightness > 99:
+				brightness = 100
+			elif brightness < 1:
+				brightness = 1
 
-			self._mylogger(u"ATXPiHat _initialize_leds() {0} - {1} - {2}".format(key, newkey, keyval))
 			pin = self._settings.getInt([newkey])
+			self._mylogger('ATXPiHat setLEDSvalues() {0} - {1} - {2} - {3}'.format(key, newkey, value, pin))
 
-			if not ledon or keyval < 0:
+			if not ledon or value < 0:
 				keyval = 0
 				realBrightness = 0
 			else:
-				realBrightness = int((float(keyval) * float(ledbrightness)) / 100)
+				realBrightness = int((float(value) * float(brightness)) / 100)
 
-			self._mylogger(u"LED pwmcycle %s " % realBrightness)
+			self._mylogger('LED pwmcycle {}'.format(realBrightness))
 			self._pigpiod.set_PWM_dutycycle(pin, realBrightness)
+
+
+	def initialize_leds(self):
+		self._mylogger(u"ATXPiHat initialize_leds()")
+
+		workleds = dict()
+
+		for key, value in self._ledcolors.iteritems():
+			workleds[key] = self._settings.getInt([key])
+
+		self.setLEDSvalues(workleds,self._settings.getInt(['LEDBrightness']))
+
 
 	def turnon(self):
 		self._mylogger('ATXPiHat - turnon called')
@@ -219,7 +225,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 
 			if self._settings.getBoolean(['UseExtSwitch']):
 				if self._settings.get(['ExternalSwitchBehaviour']).upper() == 'ONOFF':
-					self._mylogger(" pin state %s " % self._pigpiod.read(extswtpin))
+					self._mylogger("Extswitchpin state %s " % self._pigpiod.read(extswtpin))
 					if self._pigpiod.read(extswtpin) > 0:
 						self._pigpiod.write(extswtpin,0)
 						self._pigpiod.set_pull_up_down(extswtpin, pigpio.PUD_OFF)
@@ -227,7 +233,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 						self._pigpiod.write(extswtpin, 1)
 						self._pigpiod.set_pull_up_down(extswtpin, pigpio.PUD_UP)
 				else:
-					self._mylogger(" PWM duty cycle - %s " % self._pigpiod.get_PWM_dutycycle(extswtpin))
+					self._mylogger("Extswitchpin PWM duty cycle - %s " % self._pigpiod.get_PWM_dutycycle(extswtpin))
 					if self._pigpiod.get_PWM_dutycycle(extswtpin) > 0:
 						self._pigpiod.set_pull_up_down(extswtpin, pigpio.PUD_OFF)
 						self._pigpiod.write(extswtpin, 0)
@@ -248,13 +254,13 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		if sensepwrpin == 1:
 			if self._settings.getBoolean(['UseExtSwitch']):
 				if self._settings.get(['ExternalSwitchBehaviour']).upper() == 'ONOFF':
-					self._mylogger(" pin state %s " % self._pigpiod.read(extswtpin))
+					self._mylogger("ExtSwitch pin state {}".format(self._pigpiod.read(extswtpin)))
 					if self._pigpiod.read(extswtpin) > 0:
 						self._currentExtSwitchState = True
 					else:
 						self._currentExtSwitchState = False
 				else:
-					self._mylogger(" PWM duty cycle - %s " % self._pigpiod.get_PWM_dutycycle(extswtpin))
+					self._mylogger("ExtSwitch PWM duty cycle - {}".format(self._pigpiod.get_PWM_dutycycle(extswtpin)))
 					if self._pigpiod.get_PWM_dutycycle(extswtpin) > 0:
 						self._currentExtSwitchState = True
 					else:
@@ -337,18 +343,18 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 				self._mylogger("ATXPiHat check_fan_state - rpm %s" % rpm)
 				self._plugin_manager.send_plugin_message(self._identifier, dict(msg="fanrpm", field1=rpm))
 
-				self._mylogger(U'fan rpm - %s ' % rpm)
+				self._mylogger('fan rpm - %s ' % rpm)
 
 				if rpm < 1:						# This allows for three cycles before actually checking the fan
-					self._mylogger(u'Tripped 0 fan rpm')
+					self._mylogger('Tripped 0 fan rpm')
 					self._fanworking = self._fanworking + 1
 				else:
 					self._fanworking = 0
 
-				self._mylogger(u'Fan fault count %s' % self._fanworking)
+				self._mylogger('Fan fault count %s' % self._fanworking)
 
 				if self._settings.getBoolean(['FanRPMFault']) and rpm == 0 and self._fanworking > 2:
-					self._mylogger(u'Fan fault detected', forceinfo=True)
+					self._mylogger('Fan fault detected', forceinfo=True)
 					self._plugin_manager.send_plugin_message(self._identifier, dict(msg="fanrpmfault", field1='true'))
 					self.turnoff()
 
@@ -356,29 +362,20 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		self._mylogger("ATXPiHat initialize_power")
 		self._pigpiod.set_mode(self._settings.getInt(['OnOffSwitchPin']), pigpio.OUTPUT)  	# on/off
 		self._pigpiod.set_mode(self._settings.getInt(['SenseOnOffPin']), pigpio.INPUT)  	# is supply on
+		pwrsensepin = self._settings.getInt(['SenseOnOffPin'])
 
-		if self._i2cinterface is True:
-			self._smbus = None
-			self._amperage_ch0 = None
-			self._voltage_ch1 = None
+		if self._adc is None:
+			self._adc = ADCProcessor.ADCProcessor(self._mylogger, int(self._settings.get(['i2cAddress']), 16), self._settings.getInt(['i2cBus']))
 
-		addr = int(self._settings.get(['i2cAddress']), 16)
-		self._smbus = smbus.SMBus(self._settings.getInt(['i2cBus']))
-		self._amperage_ch0 = MCP342x.MCP342x(self._smbus, addr, device='MCP3422', gain=8, channel=0, resolution=18)
-		self._voltage_ch1 = MCP342x.MCP342x(self._smbus, addr, device='MCP3422', gain=2, channel=1, resolution=18)
-		self._i2cinterface = True
+		if self._pigpiod.read(pwrsensepin):  # if powered on return, do not set the baseline
+			return
 
-	def process_voltage(self):
-		self._mylogger("ATXPiHat process_voltage - called")
-		resamp = MCP342x.MCP342x.convert_and_read(self._amperage_ch0, samples=6, sleep=False)
-		self._mylogger("ATXPiHat process_voltage - amp sample %s " % resamp)
-		amperage = round(((ATXPiHat._processsamples(resamp) - self._settings.getFloat(['AmperageBaseline'])) * 1000) * 2,3)
+		sample = []
+		for i in range(0,6):
+			sample.append(self._adc.read_amperage_baseline())
 
-		resvolt = MCP342x.MCP342x.convert_and_read(self._voltage_ch1, samples=6, sleep=False)
-		self._mylogger("ATXPiHat process_voltage - volt sample %s " % resvolt)
-		voltage =  round(( self._settings.getFloat(['ReferenceVoltage']) * ATXPiHat._processsamples(resvolt)), 2)
-
-		self._plugin_manager.send_plugin_message(self._identifier, dict(msg="atxvolts", field1=amperage, field2=voltage))
+		self._ampbaseline = ATXPiHat._processsamples(sample)
+		self._mylogger('ATXPiHat Amperage Baseline {}'.format(self._ampbaseline))
 
 	@staticmethod
 	def _processsamples(listobj):
@@ -390,6 +387,30 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		cleanlist.remove(max(cleanlist))
 		cleanlist.remove(min(cleanlist))
 		return sum(cleanlist) / float(len(cleanlist))
+
+	def process_voltage(self):
+		self._mylogger("ATXPiHat process_voltage - called")
+		pwrsensepin = self._settings.getInt(['SenseOnOffPin'])
+		amperage = self._adc.read_amperage(self._ampbaseline)
+		self._mylogger("ATXPiHat process_voltage - amp sample {}".format(amperage))
+
+		if amperage > self._settings.getInt(['MaxAmperage']):
+			self._mylogger('Amperage fault detected - {}'.format(amperage), forceinfo=True)
+			self._ampfault = self._ampfault + 1
+		else:
+			self._ampfault = 0
+
+		if self._ampfault > 3 and self._pigpiod.read(pwrsensepin):			# if it sees the fault 3 times, things are bad, forces printer shutdown
+			self._mylogger('Amperage fault detected - shutting down', forceinfo=True)
+			self._plugin_manager.send_plugin_message(self._identifier, dict(msg="amperagefault", field1='true'))
+			self.turnoff()
+			self._ampfault = 0
+			return
+
+		voltage =  self._adc.read_voltage(self._settings.getFloat(['ReferenceVoltage']))
+		self._mylogger("ATXPiHat process_voltage - volt sample %s " % voltage)
+
+		self._plugin_manager.send_plugin_message(self._identifier, dict(msg="atxvolts", field1=amperage, field2=voltage))
 
 	def on_after_startup(self):
 		self._mylogger("Starting ATXPiHatPlugin", forceinfo=True)
@@ -463,9 +484,8 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 					i2cAddress='0x68',
 					i2cBus=1,					#we are using gpio pins 2 and 3
 					ReferenceVoltage=12.289,
-					AmperageBaseline=.001,
 					ProcessTimer = 2,
-					MaxAmperage=15)
+					MaxAmperage=19)
 
 	def on_settings_save(self, data):
 		self._mylogger(u"ATXPiHat on_settings_save()")
@@ -476,6 +496,9 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		self._mylogger(u"ATXPiHat on_settings_save() before - Processtimer %s" % self._settings.getInt(['ProcessTimer']))
 		if self._settings.getInt(['ProcessTimer']) < 2:
 			self._settings.setInt(['ProcessTimer'],2)
+
+		if self._settings.getInt(['MaxAmperage']) > 19:
+			self._settings.setInt(['MaxAmperage'], 2)
 
 		self.initialize_all()
 		self._mylogger(u"ATXPiHat on_settings_save() after - Processtimer %s" % self._settings.getInt(['ProcessTimer']))
@@ -553,19 +576,47 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		return 2
 
 	def HandleMarlin(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
-		self._mylogger(u"ATXPiHat HandleMarlin()")
+		self._mylogger('ATXPiHat HandleMarlin')
 
 		workcmd = cmd.upper()
 
 		if gcode:
 			if workcmd.startswith("M150"):
-				self._mylogger("LED command encounter - %s" % cmd)
+				self._mylogger('ATXPiHat HandleMarlin LED command encounter - {}'.format(cmd),forceinfo=True)
+
+				workleds = dict()
+				workval = workcmd.split()
+				self._mylogger(workval, forceinfo=True)
+				for i in workval:
+					firstchar = str(i[0].upper())
+					leddata = str(i[1:].strip())
+					self._mylogger("{} {}".format(firstchar,leddata ), forceinfo=True)
+					if not leddata.isdigit():
+						self._mylogger("LED command encounter a badly formatted value {} - {}".format(cmd, leddata), forceinfo=True)
+						return
+
+					if firstchar == 'M':
+						continue
+					elif firstchar == 'R':
+						workleds['LEDRed'] = int(leddata)
+					elif firstchar == 'B':
+						workleds['LEDBlue'] = int(leddata)
+					elif firstchar == 'G' or firstchar == 'U':
+						workleds['LEDGreen'] = int(leddata)
+					else:
+						self._mylogger("LED command encounter wrong value {}".format(leddata), forceinfo=True)
+
+				if len(workleds) is not 3:
+					self._mylogger("LED command encounter missing value {}".format(workleds), forceinfo=True)
+					return
+
+				self.setLEDSvalues(workleds, self._settings.getInt(['LEDBrightness']))
 
 			if workcmd.startswith(self._settings.get(['ExternalSwitchTriggerOn']).upper()):
-				self._mylogger("Ext Switch On command encounter - %s" % cmd)
+				self._mylogger("Ext Switch On command encounter - {}".format(cmd),forceinfo=True)
 
 			if workcmd.startswith(self._settings.get(['ExternalSwitchTriggerOff']).upper()):
-				self._mylogger("Ext Switch Off command encounter - %s" % cmd)
+				self._mylogger("Ext Switch Off command encounter - {}".format(cmd),forceinfo=True)
 
 	def get_update_information(self):
 		return dict(

@@ -208,6 +208,14 @@ $(function () {
                     }
                 }
 
+                // Fault if the amperage exceeds max
+                if (data.msg.toLowerCase() == "amperagefault") {
+                    var fanrpmdialog = $('#amp_exceed_shutdown_dialog');
+                    if (data.field1.toLowerCase() == 'true') {
+                        fanrpmdialog.modal("show");
+                    }
+                }
+
                 // Refresh printer connections
                 if (data.msg.toLowerCase() == "refreshconnection") {
                     self.cvm.requestData();
