@@ -49,6 +49,8 @@ Do not install the plugin until you have completed the installation steps below;
 
         https://github.com/banichow/OctoPrint-Atxpihat/archive/master.zip
 
+* We found during our testing, it is a good idea to restart the Pi after installation or upgrade of the plugin. This will be the first thing that we will ask during any support requests.
+
 * After this, sign into Octoprint and start working with the board.
 
 ## Credits and Contributions
