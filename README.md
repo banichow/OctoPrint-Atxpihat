@@ -1,4 +1,5 @@
 # OctoPrint-Atxpihat
+The boards are now available for [purchase at Tindie](https://www.tindie.com/products/3dprintertech/atxpihat-atx-psu-interface-for-3d-printers/). 
 
 Initial software release to support the [ATXPiHat](https://wp.me/p98gmw-7g) 1.0. A lot of the features below come disabled and are easily enabled on the settings tab. Here is the hardware/software features;
 
