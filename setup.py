@@ -14,7 +14,7 @@ plugin_package = "octoprint_atxpihat"
 plugin_name = "OctoPrint-Atxpihat"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
-plugin_version = "1.0.5"
+plugin_version = "1.0.6"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
@@ -33,7 +33,7 @@ plugin_url = "https://github.com/banichow/OctoPrint-Atxpihat"
 plugin_license = "Creative Commons"
 
 # Any additional requirements besides OctoPrint should be listed here
-plugin_requires = ["RPi.GPIO", "pigpio","smbus2"]
+plugin_requires = ["RPi.GPIO", "pigpio","smbus2","enum34"]
 
 ### --------------------------------------------------------------------------------------------------------------------
 ### More advanced options that you usually shouldn't have to touch follow after this point

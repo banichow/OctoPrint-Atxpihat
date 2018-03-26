@@ -2,11 +2,19 @@
 author - "Brian Anichowski"
 license - "Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/"
 copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.com"
+version 1.0.6 - 03/25/2018
 -->
+
 <div data-bind="visible: !loginState.isUser()">
     <h4>Logging to Gain Access</h4>
 </div>
+
+<div data-bind="visible: loginState.isUser() && !IsSmartBoard() && !global_settings.settings.plugins.atxpihat.MonitorFanRPM()">
+    <span>There are currently no features enabled that require this tab. Please check the settings to enable a feature.</span>
+</div>
+
 <div data-bind="visible: loginState.isUser()">
+<!-- ko if: IsSmartBoard() -->
     <div data-bind="visible: global_settings.settings.plugins.atxpihat.UseLEDS">
         <h4>LED Control</h4>
         <div class="accordion-inner">
@@ -92,11 +100,9 @@ copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.co
                 </tr>
                 <!-- /ko -->
             </table>
-
-
         </div>
     </div>
-
+<!-- /ko -->
 
     <div data-bind="visible: global_settings.settings.plugins.atxpihat.MonitorFanRPM">
         <h4>Fan</h4>
@@ -112,6 +118,8 @@ copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.co
             </table>
         </div>
     </div>
+
+<!-- ko if: IsSmartBoard() -->
     <div>
         <h4>Power Monitor - 12v</h4>
         <div class="accordion-inner">
@@ -134,4 +142,6 @@ copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.co
             </table>
         </div>
     </div>
+<!-- /ko -->
+
 </div>

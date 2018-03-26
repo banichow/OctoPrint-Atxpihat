@@ -2,10 +2,11 @@
 author - "Brian Anichowski"
 license - "Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/"
 copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.com"
+version 1.0.6 - 03/25/2018
 -->
 <form class="form-horizontal">
 
-    <h3>ATXhat configuration</h3>
+    <h3>ATXPiHat configuration</h3>
     <p>
         You should not need to modify any of the GPIO pin designations. The ATXhat board is setup to run on specific GPIO pins in a <strong>BCM</strong>
         configuration. Not the physical pins. <strong>Only Generation 3 boards are supported.</strong>
@@ -22,6 +23,7 @@ copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.co
             <div class="controls">
                 <select data-bind="value: settings.plugins.atxpihat.BoardVersion">
                     <option value="1.00">1.00</option>
+                    <option value="1.00Z">1.00 Zero</option>
                 </select>
             </div>
         </div>
@@ -33,7 +35,8 @@ copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.co
         </div>
     </div>
 
-    <h4>Emergency Power Off</h4>
+    <h4>Emergency Power Off (EPO)</h4>
+    <p>Please note: Emergency Power Off(EPO) is not detected until the power has been applied to the printer.</p>
     <div class="accordion-inner">
         <label class="checkbox">
             <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.UseEPO" id="ATXHatEPOOnOff">Use EPO Port </input>
@@ -53,6 +56,9 @@ copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.co
         </label>
         <label class="checkbox">
             <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.FanRPMFault" id="ATXHatFanRPMFault">Shutdown if not spinning</input>
+        </label>
+        <label class="checkbox">
+            <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.DisplayFanOnStatusPanel" id="DisplayFanOnStatusPanel">Display on Status Panel(Default On)</input>
         </label>
         <div class="control-group">
             <label class="control-label">RPM Pin</label>
@@ -134,6 +140,9 @@ copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.co
         <label class="checkbox">
             <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.PowerOffWarning" id="ATXHatPowerOffWarning">Power Off Warning(Default On)</input>
         </label>
+        <label class="checkbox">
+            <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.DisplayPWROnStatusPanel" id="DisplayPWROnStatusPanel">Display on Status Panel(Default On)</input>
+        </label>
         <div class="control-group">
             <label class="control-label">On/Off GPIO Pin</label>
             <div class="controls">
@@ -170,6 +179,13 @@ copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.co
                 <input type="number" min="1" max="19" class="input-mini" data-bind="value: settings.plugins.atxpihat.MaxAmperage"></input>&nbsp;(Default 19)
             </div>
         </div>
+    </div>
+
+    <h4>Fun Stuff</h4>
+    <div class="accordion-inner">
+        <label class="checkbox">
+            <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.RemoveLogo" id="ATXHatRemoveLogo">Remove the Octopus from the Grid(Default On)</input>
+        </label>
     </div>
 
 </form>

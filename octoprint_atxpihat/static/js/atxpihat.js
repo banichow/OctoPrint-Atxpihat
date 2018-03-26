@@ -2,21 +2,21 @@
 author - "Brian Anichowski"
 license - "Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/"
 copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.com"
+version 1.0.6 - 03/25/2018
 
 # **************** Contribution libraries and exampled **********************************
 # ATXPiHat Hardware - Steve Smith - Xygax - https://www.facebook.com/Xygax
 # PSUControl - Shawn Bruce - https://github.com/kantlivelong/
 # LEDStripControl - https://github.com/google/OctoPrint-LEDStripControl
 # pigpio - joan@abyz.me.uk - http://abyz.co.uk/rpi/pigpio/python.html
-# mcp342x - s.marple@lancaster.ac.uk - Steve Marple - https://github.com/stevemarple/python-MCP342x
-#		    This is included with the plugin to handle an installation issue with what version of smbus
-#		    we are using. We are using smbus2, not smbus-cffi. smbus2 as far as I can tell
-#           the current library and has the best documentation
+# Octoprint-ETA - Pablo Ventura - https://github.com/pablogventura/Octoprint-ETA
 # ***************************************************************************************
-
 */
 
 $(function () {
+
+    var workingurl = API_BASEURL + "plugin/atxpihat";
+
     function ProcessLEDColors(red, green, blue, bright) {
 
         // This is a fail safe to stop partial processing of the javascript
@@ -28,7 +28,7 @@ $(function () {
         $('#LEDFinalRGB').text(RGBColors);
 
         $.ajax({
-            url: API_BASEURL + "plugin/atxpihat",
+            url: workingurl,
             type: "POST",
             dataType: "json",
             data: JSON.stringify({
@@ -48,7 +48,7 @@ $(function () {
             return;
 
         $.ajax({
-            url: API_BASEURL + "plugin/atxpihat",
+            url: workingurl,
             type: "POST",
             dataType: "json",
             data: JSON.stringify({
@@ -62,7 +62,7 @@ $(function () {
     function ToggleExtSwitch()
     {
         $.ajax({
-            url: API_BASEURL + "plugin/atxpihat",
+            url: workingurl,
             type: "POST",
             dataType: "json",
             data: JSON.stringify({
@@ -71,6 +71,25 @@ $(function () {
             contentType: "application/json; charset=UTF-8"
         });
     }
+
+    function GetSmartBoardInfo()
+    {
+        var result = false;
+           $.ajax({
+                url: workingurl,
+                type: "POST",
+                dataType: "json",
+                data: JSON.stringify({ command: "IsSmartBoard" }),
+                async: false,
+                success: function (data) {
+                    result = String(data).toLowerCase();
+                },
+                contentType: "application/json; charset=UTF-8"
+            });
+
+            return result == "true" ? true : false;
+    }
+
 
     function ResetLEDSlider(LEDSliderTag, percent) {
         $(LEDSliderTag).find("div.slider-selection").css('width', percent + '%');
@@ -86,7 +105,6 @@ $(function () {
         self.cvm = parameters[2];
         self.poweroff_dialog = undefined;
 
-
         self.LEDRed = ko.observable();
         self.LEDGreen = ko.observable();
         self.LEDBlue = ko.observable();
@@ -95,8 +113,9 @@ $(function () {
         self.FanRPMText = ko.observable();
         self.ATXVoltage = ko.observable();
         self.ATXAmperage = ko.observable();
-        self.extswitchtype = ko.observable();
         self.CurrentExtSwitchState = ko.observable();
+        self.IsSmartBoard = ko.observable();
+        self.backgroundimage = ko.observable()
 
         self.StartATXHat = function ()  {
             $.ajax({
@@ -132,20 +151,17 @@ $(function () {
             }
         };
 
-        self.ResetExtSwitchValue =
-            function () {
+        self.ResetExtSwitchValue = function () {
                ResetLEDSlider("#ExtSwitchSlider",100);
                self.ExtSwitchValue(255);
                ProcessExtSwitchValue(255);
             };
 
-        self.ToggleExtSwitch = function()
-        {
+        self.ToggleExtSwitch = function() {
             ToggleExtSwitch();
         }
 
-        self.ResetLEDColors =
-            function () {
+        self.ResetLEDColors = function () {
                 ResetLEDSlider("#LEDBlueSlider",0);
                 ResetLEDSlider("#LEDRedSlider",0);
                 ResetLEDSlider("#LEDGreenSlider",0);
@@ -161,8 +177,7 @@ $(function () {
             return self.ExtSwitchValue();
         });
 
-        self.ExtSwitchValue.subscribe(function ()
-        {
+        self.ExtSwitchValue.subscribe(function () {
             ProcessExtSwitchValue(self.ExtSwitchValue());
         });
 
@@ -170,13 +185,11 @@ $(function () {
             return self.LEDRed() + ", " + self.LEDGreen() + ", " + self.LEDBlue();
         });
 
-        self.LEDBrightness.subscribe(function()
-        {
+        self.LEDBrightness.subscribe(function() {
             ProcessLEDColors(self.LEDRed(), self.LEDGreen(), self.LEDBlue(), self.LEDBrightness());
         });
 
-        self.LEDRGBText.subscribe(function ()
-        {
+        self.LEDRGBText.subscribe(function () {
             ProcessLEDColors(self.LEDRed(), self.LEDGreen(), self.LEDBlue(), self.LEDBrightness());
         });
 
@@ -193,12 +206,6 @@ $(function () {
                     self.FanRPMText(Math.round(data.field1));
                     return;
                 }
-                                // Update Fan RPM
-                if (data.msg.toLowerCase() == "atxvolts") {
-                    self.ATXVoltage(data.field2);
-                    self.ATXAmperage(data.field1);
-                    return;
-                }
 
                 // Faulted if fan is not running
                 if (data.msg.toLowerCase() == "fanrpmfault") {
@@ -206,19 +213,31 @@ $(function () {
                     if (data.field1.toLowerCase() == 'true') {
                         fanrpmdialog.modal("show");
                     }
-                }
-
-                // Fault if the amperage exceeds max
-                if (data.msg.toLowerCase() == "amperagefault") {
-                    var fanrpmdialog = $('#amp_exceed_shutdown_dialog');
-                    if (data.field1.toLowerCase() == 'true') {
-                        fanrpmdialog.modal("show");
-                    }
+                    return;
                 }
 
                 // Refresh printer connections
                 if (data.msg.toLowerCase() == "refreshconnection") {
                     self.cvm.requestData();
+                    return;
+                }
+
+                // Handle EPO engaged/disengaged
+                if (data.msg.toLowerCase() == "epoengaged") {
+                    var epostatus = $('#atxpihat_epostatus_icon');
+                    var epoengaged = $('#epo_engaged_dialog');
+                    if (data.field1.toLowerCase() == 'true') {
+
+                        epoengaged.modal("show");
+                        epostatus.removeClass("fa-circle-o");
+                        epostatus.addClass("fa-times-circle");
+
+                    }
+                    else {
+                        epostatus.removeClass("fa-times-circle");
+                        epostatus.addClass("fa-circle-o");
+
+                    }
                     return;
                 }
 
@@ -241,44 +260,115 @@ $(function () {
                     return;
                 }
 
-                // Handle EPO engaged/disengaged
-                if (data.msg.toLowerCase() == "epoengaged") {
-                    var epostatus = $('#atxpihat_epostatus');
-                    var epoengaged = $('#epo_engaged_dialog');
+                if (data.msg.toLowerCase() == "backgroundimage") {
                     if (data.field1.toLowerCase() == 'true') {
-
-                        epoengaged.modal("show");
-                        epostatus.css('color', 'red');
+                        $("#temperature-graph").css({"background-image":"url('')"});
                     }
                     else {
-                        epostatus.css('color', 'black');
+                        $("#temperature-graph").css({"background-image":"url('" + self.backgroundimage() +"')"});
                     }
                     return;
                 }
 
-                if (data.msg.toLowerCase() == "extswitchpinstate") {
-                    var togglebutton = $('#atxpihat_toggleextswitch');
-                    if (data.field1.toLowerCase() == 'true') {
-                        self.CurrentExtSwitchState('ON')
-                        togglebutton.text('Turn Off');
+                // Update the status box when settings are saved
+                if (data.msg.toLowerCase() == "updatestatusbox") {
+                    self.renderstatusbox(self.global_settings.settings.plugins.atxpihat);
+                    return;
+                }
+
+                // If a smartboard then look to process amp/volt/switch
+                if (self.IsSmartBoard()) {
+
+                    // Fault if the amperage exceeds max
+                    if (data.msg.toLowerCase() == "amperagefault") {
+                        var fanrpmdialog = $('#amp_exceed_shutdown_dialog');
+                        if (data.field1.toLowerCase() == 'true') {
+                            fanrpmdialog.modal("show");
+                        }
+                        return;
                     }
-                    else {
-                        self.CurrentExtSwitchState('OFF')
-                        togglebutton.text('Turn On');
+
+                    if (data.msg.toLowerCase() == "atxvolts") {
+                        self.ATXVoltage(data.field2);
+                        self.ATXAmperage(data.field1);
+                        return;
+                    }
+
+
+                   if (data.msg.toLowerCase() == "extswitchpinstate") {
+                        var togglebutton = $('#atxpihat_toggleextswitch');
+                        if (data.field1.toLowerCase() == 'true') {
+                            self.CurrentExtSwitchState('ON')
+                            togglebutton.text('Turn Off');
+                        }
+                        else {
+                            self.CurrentExtSwitchState('OFF')
+                            togglebutton.text('Turn On');
+                        }
+                        return;
                     }
                 }
             }
         };
 
+        self.renderstatusbox = function(atxsettings) {
 
-       self.onBeforeBinding = function () {
+            showPSUFan = $('#showPSUFan');
+            showPSUVolt = $('#showPSUVolt');
+            showPSUAmp = $('#showPSUAmp');
+            ATXStatusBox = $("#ATXStatusBox");
+
+            if (!atxsettings.DisplayFanOnStatusPanel() && !atxsettings.DisplayPWROnStatusPanel())
+            {
+                ATXStatusBox.hide();
+                return;
+            }
+            else
+            {
+                ATXStatusBox.show();
+            }
+
+            if (atxsettings.DisplayFanOnStatusPanel() && atxsettings.MonitorFanRPM()) {
+                showPSUFan.show();
+            }
+            else
+            {
+                showPSUFan.hide();
+            }
+
+            if (self.IsSmartBoard() && atxsettings.DisplayPWROnStatusPanel())
+            {
+                showPSUAmp.show();
+                showPSUVolt.show();
+            }
+            else
+            {
+                showPSUAmp.hide();
+                showPSUVolt.hide();
+            }
+        };
+
+        self.onBeforeBinding = function () {
+            self.IsSmartBoard(GetSmartBoardInfo());
             self.atxsettings = self.global_settings.settings.plugins.atxpihat;
             self.LEDRed(self.atxsettings.LEDRed());
             self.LEDGreen(self.atxsettings.LEDGreen());
             self.LEDBlue(self.atxsettings.LEDBlue());
             self.LEDBrightness(self.atxsettings.LEDBrightness());
             self.ExtSwitchValue(self.atxsettings.ExternalSwitchValue());
-            self.extswitchtype(self.atxsettings.ExternalSwitchBehaviour());
+
+            // Add when the page is setup
+            var element = $("#state").find(".accordion-inner .progress");
+            if (element.length) {
+                var toinsert = "<div id='ATXStatusBox' data-bind=\"visible: loginState.isUser()\"><hr>" +
+                "<div id='showPSUFan'>Fan RPM: <strong id='PSUFanRPMstring' data-bind=\"html: FanRPMText\"></strong><br></div>" +
+                "<div id='showPSUVolt'>Voltage: <strong id='PSUVoltstring' data-bind=\"html: ATXVoltage\"></strong><br></div>" +
+                "<div id='showPSUAmp'>Amperage: <strong id='PSUAmpstring' data-bind=\"html: ATXAmperage\"></strong><br></div>" +
+                "<hr></div>";
+                element.before(toinsert);
+            }
+
+            self.renderstatusbox(self.atxsettings);
 
             ProcessLEDColors(self.LEDRed(), self.LEDGreen(), self.LEDBlue(), self.LEDBrightness());
             ProcessExtSwitchValue(self.ExtSwitchValue());
@@ -287,15 +377,27 @@ $(function () {
         self.onAfterBinding = function() {
             self.settings = self.global_settings.settings.plugins.atxpihat;
             self.poweroff_dialog = $("#ATXHatpoweroffconfirmation");
-        }
+            self.backgroundimage($("#temperature-graph").css("background-image").replace(/^url\(['"]?/,'').replace(/['"]?\)$/,''));
 
+            if (self.settings.RemoveLogo)
+                $("#temperature-graph").css({"background-image":"url('')"});
+
+        };
+
+        self.onUserLoggedIn = function(user) {
+            // the only way to have this call work is to be logged in.
+            // It only has to be called once.
+            self.IsSmartBoard(GetSmartBoardInfo());
+            self.renderstatusbox(self.global_settings.settings.plugins.atxpihat);
+
+        }
     }
 
-    ADDITIONAL_VIEWMODELS.push([
-        ATXPiHatViewModel,
-        ["settingsViewModel", "loginStateViewModel","connectionViewModel"],
-        ["#tab_plugin_atxpihat","#navbar_plugin_atxpihat","#navbar_plugin_atxpihat_2"]
-    ]);
+    OCTOPRINT_VIEWMODELS.push({
+        construct: ATXPiHatViewModel,
+        dependencies: ["settingsViewModel", "loginStateViewModel", "connectionViewModel","printerStateViewModel"],
+        elements: ["#tab_plugin_atxpihat", "#navbar_plugin_atxpihat", "#navbar_plugin_atxpihat_2","#PSUVoltstring","#PSUAmpstring","#PSUFanRPMstring",'#ATXStatusBox']
+    });
 
 });
 

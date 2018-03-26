@@ -56,6 +56,7 @@ Do not install the plugin until you have completed the installation steps below;
 * PSUControl - Shawn Bruce - https://github.com/kantlivelong/
 * LEDStripControl - https://github.com/google/OctoPrint-LEDStripControl
 * pigpio - joan@abyz.me.uk - http://abyz.co.uk/rpi/pigpio/python.html
+* Octoprint-ETA - Pablo Ventura - https://github.com/pablogventura/Octoprint-ETA
 * Gina Häußge <gina@octoprint.org>
 
 ## Licensing
