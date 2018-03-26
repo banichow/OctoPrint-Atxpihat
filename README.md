@@ -1,4 +1,5 @@
 # OctoPrint-Atxpihat
+02/20/2018 - The boards are now available for [purchase at Tindie](https://www.tindie.com/products/3dprintertech/atxpihat-atx-psu-interface-for-3d-printers/). 
 
 Initial software release to support the [ATXPiHat](https://wp.me/p98gmw-7g) 1.0. A lot of the features below come disabled and are easily enabled on the settings tab. Here is the hardware/software features;
 
@@ -47,6 +48,8 @@ Do not install the plugin until you have completed the installation steps below;
 * Install via the bundled [Plugin Manager](https://github.com/foosel/OctoPrint/wiki/Plugin:-Plugin-Manager) or manually using this URL:
 
         https://github.com/banichow/OctoPrint-Atxpihat/archive/master.zip
+
+* We found during our testing, it is a good idea to restart the Pi after installation or upgrade of the plugin. This will be the first thing that we will ask during any support requests.
 
 * After this, sign into Octoprint and start working with the board.
 
