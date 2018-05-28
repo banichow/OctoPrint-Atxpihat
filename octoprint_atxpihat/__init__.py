@@ -25,7 +25,10 @@ import sys
 import octoprint.plugin
 from octoprint.server import user_permission
 from octoprint.events import Events
-import Adafruit_DHT
+try:
+	import Adafruit_DHT
+except ImportError:
+	print 'no adafruit library'
 import pigpio
 import glob
 import time
