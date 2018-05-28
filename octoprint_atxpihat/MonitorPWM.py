@@ -7,7 +7,7 @@ from __future__ import absolute_import
 __author__ = "Brian Anichowski"
 __license__ = "Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/"
 __copyright__ = "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.com"
-__version__ = "1.0.6"
+__version__ = "1.1.0"
 
 import time
 import pigpio

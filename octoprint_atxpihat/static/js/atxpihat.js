@@ -2,7 +2,7 @@
 author - "Brian Anichowski"
 license - "Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/"
 copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.com"
-version 1.0.6 - 03/25/2018
+version 1.1.0 - 05/28/2018
 
 # **************** Contribution libraries and exampled **********************************
 # ATXPiHat Hardware - Steve Smith - Xygax - https://www.facebook.com/Xygax
@@ -10,6 +10,8 @@ version 1.0.6 - 03/25/2018
 # LEDStripControl - https://github.com/google/OctoPrint-LEDStripControl
 # pigpio - joan@abyz.me.uk - http://abyz.co.uk/rpi/pigpio/python.html
 # Octoprint-ETA - Pablo Ventura - https://github.com/pablogventura/Octoprint-ETA
+# Octoprint-Filament-Reloaded - Connor Huffine - https://github.com/kontakt/Octoprint-Filament-Reloaded
+# DS18B20 Temperature sensor - https://pimylifeup.com/raspberry-pi-temperature-sensor/
 # ***************************************************************************************
 */
 
@@ -72,6 +74,20 @@ $(function () {
         });
     }
 
+    function RefreshFilamentStatus()
+    {
+        $.ajax({
+            url: workingurl,
+            type: "POST",
+            dataType: "json",
+            data: JSON.stringify({
+                command: "RefreshFilamentStatus"
+            }),
+            contentType: "application/json; charset=UTF-8"
+        });
+    }
+
+
     function GetSmartBoardInfo()
     {
         var result = false;
@@ -100,9 +116,10 @@ $(function () {
         var self = this;
 
         self.global_settings = parameters[0];
-        self.settings = undefined;
+        self.settings = ko.observable();
         self.loginState = parameters[1];
         self.cvm = parameters[2];
+        self.term = parameters[4];
         self.poweroff_dialog = undefined;
 
         self.LEDRed = ko.observable();
@@ -113,9 +130,13 @@ $(function () {
         self.FanRPMText = ko.observable();
         self.ATXVoltage = ko.observable();
         self.ATXAmperage = ko.observable();
+        self.ATXFilament = ko.observable();
+        self.ATXTemperature = ko.observable();
+        self.ATXHumidity = ko.observable();
+        self.ATXTempHum = ko.observable();
         self.CurrentExtSwitchState = ko.observable();
         self.IsSmartBoard = ko.observable();
-        self.backgroundimage = ko.observable()
+        self.backgroundimage = ko.observable();
 
         self.StartATXHat = function ()  {
             $.ajax({
@@ -144,7 +165,7 @@ $(function () {
         };
 
         self.ShutdownATXHat = function() {
-            if (self.settings.PowerOffWarning()) {
+            if (self.global_settings.settings.plugins.atxpihat.PowerOffWarning()) {
                 self.poweroff_dialog.modal("show");
             } else {
                 self.CallToShutdownATXHat();
@@ -270,9 +291,74 @@ $(function () {
                     return;
                 }
 
+                if (data.msg.toLowerCase() == "filterterminal") {
+                    var checkbox1 = $('#terminal-filterpanel > div > label:nth-child(1) > input');
+                    var checkbox3 = $('#terminal-filterpanel > div > label:nth-child(3) > input');
+                    var filter, tofilter = false;
+                    if (data.field1.toLowerCase() == 'true') {
+                        filter = ["Recv:\\s+(ok\\s+)?(B|T\\d*):\\d.*|Recv:\\s+wait|Send: M105"];
+                        tofilter = true;
+                    }
+                    else {
+                        filter = [""];
+                    }
+                    self.term.filterRegex(filter);
+                    self.term.activeFilters();
+                    setTimeout(function()
+                        {
+                            checkbox1.prop('checked',tofilter);
+                            checkbox3.prop('checked',tofilter);
+                        },
+                    1000);
+
+                    return;
+                }
+
                 // Update the status box when settings are saved
                 if (data.msg.toLowerCase() == "updatestatusbox") {
                     self.renderstatusbox(self.global_settings.settings.plugins.atxpihat);
+                    return;
+                }
+
+                if (data.msg.toLowerCase() == "removetemp"){
+                    $('#showTempHum').hide();
+                }
+
+                if (data.msg.toLowerCase() == "filamentstatus") {
+                    if (data.field1.toLowerCase().startsWith("out")) {
+                        self.ATXFilament('Out');
+                        if (data.field1.toLowerCase() == "out")
+                            $('#filament_out_pausedialog').modal('show');
+                        return;
+                    }
+                    if (data.field1.toLowerCase() == "na") {
+                        self.ATXFilament('N/A');
+                        return;
+                    }
+                    if (data.field1.toLowerCase() == "good") {
+                        self.ATXFilament('Loaded');
+                        return;
+                    }
+                    return;
+                }
+
+                // Update the temprature and humidity display
+                if (data.msg.toLowerCase() == "updatetemp") {
+                    var wrkstr = '';
+                    if (data.field1 != undefined)
+                    {
+                        self.ATXTemperature(data.field1);
+                        wrkstr = data.field1
+                    }
+                    if (data.field2 != undefined)
+                    {
+                        self.ATXHumidity(data.field2);
+                        if (wrkstr.length > 0) {
+                            wrkstr = wrkstr + ' / '
+                        }
+                        wrkstr = wrkstr + data.field2
+                    }
+                    self.ATXTempHum(wrkstr);
                     return;
                 }
 
@@ -294,8 +380,15 @@ $(function () {
                         return;
                     }
 
+                    if (data.msg.toLowerCase() == "ampbaseline") {
+                        self.ATXAmperage('Base Lining.....');
+                    }
 
-                   if (data.msg.toLowerCase() == "extswitchpinstate") {
+                    if (data.msg.toLowerCase() == "ampbaselinecomp") {
+                        self.ATXAmperage('Base Line Complete');
+                    }
+
+                    if (data.msg.toLowerCase() == "extswitchpinstate") {
                         var togglebutton = $('#atxpihat_toggleextswitch');
                         if (data.field1.toLowerCase() == 'true') {
                             self.CurrentExtSwitchState('ON')
@@ -317,8 +410,14 @@ $(function () {
             showPSUVolt = $('#showPSUVolt');
             showPSUAmp = $('#showPSUAmp');
             ATXStatusBox = $("#ATXStatusBox");
+            showPSUFilament = $('#showPSUFilament');
+            showTempHum = $('#showTempHum');
 
-            if (!atxsettings.DisplayFanOnStatusPanel() && !atxsettings.DisplayPWROnStatusPanel())
+            if (!atxsettings.DisplayFanOnStatusPanel() &&
+                !atxsettings.DisplayPWROnStatusPanel() &&
+                !atxsettings.DisplayFilamentStatusPanel() &&
+                !atxsettings.DisplayTemperatureOnStatusPanel() &&
+                !atxsettings.IO4Enabled)
             {
                 ATXStatusBox.hide();
                 return;
@@ -326,6 +425,29 @@ $(function () {
             else
             {
                 ATXStatusBox.show();
+            }
+
+            if (atxsettings.IO4Enabled() && !self.IsSmartBoard()) {
+                // Display Filament sensor
+                if (atxsettings.IO4Behaviour().startsWith('FILAMENT') && atxsettings.DisplayFilamentStatusPanel()) {
+                    showPSUFilament.show();
+                }
+                else {
+                    showPSUFilament.hide();
+                }
+
+                //DisplayTemperatureOnStatusPanel
+                if ((atxsettings.IO4Behaviour().startsWith('DHT') || atxsettings.IO4Behaviour().startsWith('DS')) && atxsettings.DisplayTemperatureOnStatusPanel()) {
+                    showTempHum.show();
+                }
+                else {
+                    showTempHum.hide();
+                }
+            }
+            else
+            {
+                showPSUFilament.hide();
+                showTempHum.hide();
             }
 
             if (atxsettings.DisplayFanOnStatusPanel() && atxsettings.MonitorFanRPM()) {
@@ -336,8 +458,7 @@ $(function () {
                 showPSUFan.hide();
             }
 
-            if (self.IsSmartBoard() && atxsettings.DisplayPWROnStatusPanel())
-            {
+            if (self.IsSmartBoard() && atxsettings.DisplayPWROnStatusPanel() && atxsettings.MonitorPower()) {
                 showPSUAmp.show();
                 showPSUVolt.show();
             }
@@ -364,6 +485,8 @@ $(function () {
                 "<div id='showPSUFan'>Fan RPM: <strong id='PSUFanRPMstring' data-bind=\"html: FanRPMText\"></strong><br></div>" +
                 "<div id='showPSUVolt'>Voltage: <strong id='PSUVoltstring' data-bind=\"html: ATXVoltage\"></strong><br></div>" +
                 "<div id='showPSUAmp'>Amperage: <strong id='PSUAmpstring' data-bind=\"html: ATXAmperage\"></strong><br></div>" +
+                "<div id='showPSUFilament'>Filament: <strong id='Filamentstring' data-bind=\"html: ATXFilament\"></strong><br></div>" +
+                "<div id='showTempHum'>Temp/Hum: <strong id='Tempstring' data-bind=\"html: ATXTempHum\"></strong><br></div>" +
                 "<hr></div>";
                 element.before(toinsert);
             }
@@ -372,10 +495,11 @@ $(function () {
 
             ProcessLEDColors(self.LEDRed(), self.LEDGreen(), self.LEDBlue(), self.LEDBrightness());
             ProcessExtSwitchValue(self.ExtSwitchValue());
+            RefreshFilamentStatus();
         };
 
         self.onAfterBinding = function() {
-            self.settings = self.global_settings.settings.plugins.atxpihat;
+            self.settings(self.global_settings.settings.plugins.atxpihat);
             self.poweroff_dialog = $("#ATXHatpoweroffconfirmation");
             self.backgroundimage($("#temperature-graph").css("background-image").replace(/^url\(['"]?/,'').replace(/['"]?\)$/,''));
 
@@ -387,16 +511,23 @@ $(function () {
         self.onUserLoggedIn = function(user) {
             // the only way to have this call work is to be logged in.
             // It only has to be called once.
+            var logo = self.global_settings.settings.plugins.atxpihat.RemoveLogo();
             self.IsSmartBoard(GetSmartBoardInfo());
             self.renderstatusbox(self.global_settings.settings.plugins.atxpihat);
+            RefreshFilamentStatus();
 
+             if (logo)
+                $("#temperature-graph").css({"background-image":"url('')"});
+             else
+                 $("#temperature-graph").css({"background-image":"url('" + self.backgroundimage() +"')"});
         }
     }
 
     OCTOPRINT_VIEWMODELS.push({
         construct: ATXPiHatViewModel,
-        dependencies: ["settingsViewModel", "loginStateViewModel", "connectionViewModel","printerStateViewModel"],
-        elements: ["#tab_plugin_atxpihat", "#navbar_plugin_atxpihat", "#navbar_plugin_atxpihat_2","#PSUVoltstring","#PSUAmpstring","#PSUFanRPMstring",'#ATXStatusBox']
+        dependencies: ["settingsViewModel", "loginStateViewModel", "connectionViewModel","printerStateViewModel","terminalViewModel"],
+        elements: ["#tab_plugin_atxpihat", "#navbar_plugin_atxpihat", "#navbar_plugin_atxpihat_2","#PSUVoltstring",
+                    "#PSUAmpstring","#PSUFanRPMstring","#Filamentstring","#Tempstring","#settings_plugin_atxpihat"]
     });
 
 });

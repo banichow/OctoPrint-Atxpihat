@@ -6,7 +6,7 @@ from enum import Enum
 __author__ = 'Brian Anichowski'
 __license__ = "Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/"
 __copyright__ = "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.com"
-__version__ = "1.0.6"
+__version__ = "1.1.0"
 
 class SampleType(Enum):
 	Voltage = 1,
@@ -52,18 +52,18 @@ class ADCProcessor(object):
 
 		while True:
 			v = localsmbus.read_i2c_block_data(self._mcpaddress, config, self._readbytes)
-			self._logger("ADC.readbus {} value {}".format(sampletype.name, v),self._debug)
+			self._logger("ADC.readbus {} value {}".format(sampletype.name, v), self._debug)
 			if v[-1] == config:
 				break
 			else:
-				self._logger("ADC.readbus {} RETRY did not get back correct config".format(sampletype.name),self._debug)
+				self._logger("ADC.readbus {} RETRY did not get back correct config".format(sampletype.name), self._debug)
 				time.sleep(self._delayread)
 
 		localsmbus.close()
 
 		count = 0
 		for i in range(self._readbytes - 1):
-			if sampletype == SampleType.Voltage:		# this is the deal with issues of the chip reading - for voltage
+			if sampletype == SampleType.Voltage:  # this is the deal with issues of the chip reading - for voltage
 				if (i == 0 or i == 1) and v[i] == 255:
 					self._resetchipcounter += 1
 					v[i] = 0
@@ -91,6 +91,7 @@ class ADCProcessor(object):
 
 	def read_amperage(self, baseline = 0):
 		self._logger("ADC.read_amperage called - (baseline) %s" % baseline,self._debug)
+
 		retval = abs(self.readbus(self._ampconfig, SampleType.Amperage) - baseline) * 2000
 
 		self._logger("ADC.read_amperage complete - %s" % retval,self._debug)
@@ -100,8 +101,11 @@ class ADCProcessor(object):
 def detectaddress(logger, address = 0x68 , busaddress = 1):
 
 	try:
+		logger("detectaddress - after try")
 		localsmbus = None
+		logger("detectaddress - after localsmbus = None")
 		localsmbus = smbus.SMBus(busaddress)
+		logger("detectaddress - after smbus.SMBus(busaddress)")
 		localsmbus.read_byte(address)
 		logger("detectaddress - smartboard - True")
 		return True

@@ -1,4 +1,18 @@
 # OctoPrint-Atxpihat
+05/28/2018 - Version 1.1.0 - This version provides support for the new [ATXPiHat Zero](https://wp.me/p98gmw-bf). These will be available for sale very soon.
+
+General Feature updates
+* Fully compatible with Octoprint 1.3.8 or greater.
+* Auto sense which board is installed and changes the driver to accommodate it.
+* Refactored the ADC control software
+* Initial testing on a Pi Zero W - More work is pending
+
+At the time of development, we were unable to get the new Pi 3B+, this testing is pending.
+
+ATXPiHat Zero updates - Please review all of the [feature differences](https://wp.me/p98gmw-bf)
+* Added IO support – DHT11/22/AM2302/DS18B20/2 and 3 wire filament out sensors - These will be available for sale very soon.
+* EPO support prior to power up
+
 02/20/2018 - The boards are now available for [purchase at Tindie](https://www.tindie.com/products/3dprintertech/atxpihat-atx-psu-interface-for-3d-printers/). 
 
 Initial software release to support the [ATXPiHat](https://wp.me/p98gmw-7g) 1.0. A lot of the features below come disabled and are easily enabled on the settings tab. Here is the hardware/software features;
@@ -61,6 +75,10 @@ Do not install the plugin until you have completed the installation steps below;
 * pigpio - joan@abyz.me.uk - http://abyz.co.uk/rpi/pigpio/python.html
 * Octoprint-ETA - Pablo Ventura - https://github.com/pablogventura/Octoprint-ETA
 * Gina Häußge <gina@octoprint.org>
+* Octoprint-Filament-Reloaded - Connor Huffine - https://github.com/kontakt/Octoprint-Filament-Reloaded
+* DS18B20 Temperature sensor - https://pimylifeup.com/raspberry-pi-temperature-sensor/
+* https://learn.adafruit.com/adafruits-raspberry-pi-lesson-11-ds18b20-temperature-sensing/ds18b20
+* https://www.modmypi.com/blog/am2302-temphumidity-sensor
 
 ## Licensing
 Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/

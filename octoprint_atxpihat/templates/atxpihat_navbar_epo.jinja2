@@ -1,8 +1,8 @@
 <!--
 author - "Brian Anichowski"
 license - "Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/"
-copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.com"
-version 1.0.6 - 03/25/2018
+copyright - "Copyright (C) 2018 Brian Anichowski https://baprojectworkshop.com"
+version 1.1.0 - 05/28/2018
 -->
 <a href="javascript:void(0)" title="EPO Enabled" id="EPODisplay" data-bind="visible : loginState.isUser()" style="display:none;">
         <span data-bind="visible: global_settings.settings.plugins.atxpihat.UseEPO">
@@ -49,6 +49,21 @@ version 1.0.6 - 03/25/2018
     <div class="modal-body">
         <p>
             Emergency Power Off - Exceeded configured amperage draw!
+        </p>
+    </div>
+    <div class="modal-footer">
+        <a href="#" class="btn" data-dismiss="modal" aria-hidden="true">{{ _('Dismiss') }}</a>
+    </div>
+</div>
+
+<div id="filament_out_pausedialog" class="modal hide fade">
+    <div class="modal-header">
+        <a href="#" class="close" data-dismiss="modal" aria-hidden="true">&times;</a>
+        <h3>Notice</h3>
+    </div>
+    <div class="modal-body">
+        <p>
+            Printing Stopped out of filament detected!
         </p>
     </div>
     <div class="modal-footer">

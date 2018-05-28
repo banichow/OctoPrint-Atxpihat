@@ -1,11 +1,10 @@
 <!--
 author - "Brian Anichowski"
 license - "Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/"
-copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.com"
-version 1.0.6 - 03/25/2018
+copyright - "Copyright (C) 2018 Brian Anichowski https://baprojectworkshop.com"
+version 1.1.0 - 05/28/2018
 -->
 <form class="form-horizontal">
-
     <h3>ATXPiHat configuration</h3>
     <p>
         You should not need to modify any of the GPIO pin designations. The ATXhat board is setup to run on specific GPIO pins in a <strong>BCM</strong>
@@ -15,13 +14,13 @@ version 1.0.6 - 03/25/2018
     <div class="accordion-inner">
         <div class="control-group">
             <label class="checkbox">
-                <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.debuglogging" id="ATXHatDebugLogging">Send Debug Logging to 'info'</input>
+                <input type="checkbox" data-bind="checked: global_settings.settings.plugins.atxpihat.debuglogging" id="ATXHatDebugLogging">Send Debug Logging to 'info'</input>
             </label>
         </div>
         <div class="control-group">
             <label class="control-label">Board Version</label>
             <div class="controls">
-                <select data-bind="value: settings.plugins.atxpihat.BoardVersion">
+                <select data-bind="value: global_settings.settings.plugins.atxpihat.BoardVersion">
                     <option value="1.00">1.00</option>
                     <option value="1.00Z">1.00 Zero</option>
                 </select>
@@ -30,7 +29,7 @@ version 1.0.6 - 03/25/2018
         <div class="control-group">
             <label class="control-label">Browser Update (seconds)</label>
             <div class="controls">
-                <input type="number" min="2" max="9" class="input-mini" data-bind="value: settings.plugins.atxpihat.ProcessTimer"></input>&nbsp;(Default 2)
+                <input type="number" min="2" max="9" class="input-mini" data-bind="value: global_settings.settings.plugins.atxpihat.ProcessTimer"></input>&nbsp;(Default 2)
             </div>
         </div>
     </div>
@@ -39,12 +38,12 @@ version 1.0.6 - 03/25/2018
     <p>Please note: Emergency Power Off(EPO) is not detected until the power has been applied to the printer.</p>
     <div class="accordion-inner">
         <label class="checkbox">
-            <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.UseEPO" id="ATXHatEPOOnOff">Use EPO Port </input>
+            <input type="checkbox" data-bind="checked: global_settings.settings.plugins.atxpihat.UseEPO" id="ATXHatEPOOnOff">Use EPO Port </input>
         </label>
         <div class="control-group">
             <label class="control-label">EPO Pin</label>
             <div class="controls">
-                <input type="number" min="0" class="input-mini" data-bind="value: settings.plugins.atxpihat.EPOPin"></input>&nbsp;(Default 15)
+                <input type="number" min="0" class="input-mini" data-bind="value: global_settings.settings.plugins.atxpihat.EPOPin"></input>&nbsp;(Default 15)
             </div>
         </div>
     </div>
@@ -52,34 +51,34 @@ version 1.0.6 - 03/25/2018
     <h4>Monitor Fan RPM</h4>
     <div class="accordion-inner">
         <label class="checkbox">
-            <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.MonitorFanRPM" id="ATXHatMonitorFanRPM">Monitor Fan RPM</input>
+            <input type="checkbox" data-bind="checked: global_settings.settings.plugins.atxpihat.MonitorFanRPM" id="ATXHatMonitorFanRPM">Monitor Fan RPM</input>
         </label>
         <label class="checkbox">
-            <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.FanRPMFault" id="ATXHatFanRPMFault">Shutdown if not spinning</input>
+            <input type="checkbox" data-bind="checked: global_settings.settings.plugins.atxpihat.FanRPMFault" id="ATXHatFanRPMFault">Shutdown if not spinning</input>
         </label>
         <label class="checkbox">
-            <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.DisplayFanOnStatusPanel" id="DisplayFanOnStatusPanel">Display on Status Panel(Default On)</input>
+            <input type="checkbox" data-bind="checked: global_settings.settings.plugins.atxpihat.DisplayFanOnStatusPanel" id="DisplayFanOnStatusPanel">Display on Status Panel(Default On)</input>
         </label>
         <div class="control-group">
             <label class="control-label">RPM Pin</label>
             <div class="controls">
-                <input type="number" min="0" class="input-mini" data-bind="value: settings.plugins.atxpihat.FanRPMPin"></input>&nbsp;(Default 14)
+                <input type="number" min="0" class="input-mini" data-bind="value: global_settings.settings.plugins.atxpihat.FanRPMPin"></input>&nbsp;(Default 14)
             </div>
         </div>
     </div>
-
+<!-- ko if: IsSmartBoard() -->
     <h4>External Switch</h4>
     <div class="accordion-inner">
         <label class="checkbox">
-            <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.UseExtSwitch" id="ATXHatExtSwitchOnOff">Use External Switch </input>
+            <input type="checkbox" data-bind="checked: global_settings.settings.plugins.atxpihat.UseExtSwitch" id="ATXHatExtSwitchOnOff">Use External Switch </input>
         </label>
         <label class="checkbox">
-            <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.InitExtSwitchOn" id="ATXHatInitExtSwitchOn">Initially On</input>
+            <input type="checkbox" data-bind="checked: global_settings.settings.plugins.atxpihat.InitExtSwitchOn" id="ATXHatInitExtSwitchOn">Initially On</input>
         </label>
         <div class="control-group">
             <label class="control-label">Behaviour</label>
             <div class="controls">
-                <select data-bind="value: settings.plugins.atxpihat.ExternalSwitchBehaviour">
+                <select data-bind="value: global_settings.settings.plugins.atxpihat.ExternalSwitchBehaviour">
                     <option value="ONOFF">On/Off</option>
                     <option value="VARIABLE">Variable (PWM)</option>
                 </select>
@@ -89,13 +88,13 @@ version 1.0.6 - 03/25/2018
         <div class="control-group">
             <label class="control-label">Gcode - ON</label>
             <div class="controls">
-                <input type="text" class="input-mini" size="7" data-bind="value: settings.plugins.atxpihat.ExternalSwitchTriggerOn"></input>&nbsp;(Default M355 S1)
+                <input type="text" class="input-mini" size="7" data-bind="value: global_settings.settings.plugins.atxpihat.ExternalSwitchTriggerOn"></input>&nbsp;(Default M355 S1)
             </div>
         </div>
         <div class="control-group">
             <label class="control-label">Gcode - OFF</label>
             <div class="controls">
-                <input type="text" class="input-mini" size="7" data-bind="value: settings.plugins.atxpihat.ExternalSwitchTriggerOFF"></input>&nbsp;(Default M355 S0)
+                <input type="text" class="input-mini" size="7" data-bind="value: global_settings.settings.plugins.atxpihat.ExternalSwitchTriggerOFF"></input>&nbsp;(Default M355 S0)
             </div>
         </div>
 
@@ -103,7 +102,7 @@ version 1.0.6 - 03/25/2018
         <div class="control-group">
             <label class="control-label">Switch Pin</label>
             <div class="controls">
-                <input type="number" min="0" class="input-mini" data-bind="value: settings.plugins.atxpihat.ExternalSwitchPin"></input>&nbsp;(Default 27)
+                <input type="number" min="0" class="input-mini" data-bind="value: global_settings.settings.plugins.atxpihat.ExternalSwitchPin"></input>&nbsp;(Default 27)
             </div>
         </div>
 
@@ -113,78 +112,150 @@ version 1.0.6 - 03/25/2018
     <p>Please note: Depending on LED cable, you may need to adjust which GPIO pins to move the correct color to the correct wire.</p>
     <div class="accordion-inner">
         <label class="checkbox">
-            <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.UseLEDS" id="ATXHatUseLEDS">Use LED Port</input>
+            <input type="checkbox" data-bind="checked: global_settings.settings.plugins.atxpihat.UseLEDS" id="ATXHatUseLEDS">Use LED Port</input>
         </label>
         <div class="control-group">
             <label class="control-label">Red Pin</label>
             <div class="controls">
-                <input type="number" min="0" class="input-mini" data-bind="value: settings.plugins.atxpihat.LEDRedPin"></input>&nbsp;(Default 23)
+                <input type="number" min="0" class="input-mini" data-bind="value: global_settings.settings.plugins.atxpihat.LEDRedPin"></input>&nbsp;(Default 23)
             </div>
         </div>
         <div class="control-group">
             <label class="control-label">Green Pin</label>
             <div class="controls">
-                <input type="number" min="0" class="input-mini" data-bind="value: settings.plugins.atxpihat.LEDGreenPin"></input>&nbsp;(Default 22)
+                <input type="number" min="0" class="input-mini" data-bind="value: global_settings.settings.plugins.atxpihat.LEDGreenPin"></input>&nbsp;(Default 22)
             </div>
         </div>
         <div class="control-group">
             <label class="control-label">Blue Pin</label>
             <div class="controls">
-                <input type="number" min="0" class="input-mini" data-bind="value: settings.plugins.atxpihat.LEDBluePin"></input>&nbsp;(Default 24)
+                <input type="number" min="0" class="input-mini" data-bind="value: global_settings.settings.plugins.atxpihat.LEDBluePin"></input>&nbsp;(Default 24)
             </div>
         </div>
     </div>
+<!-- /ko -->
+
+<!-- ko if: !IsSmartBoard() -->
+    <h4>IO 4 Port Control</h4>
+    <div class="accordion-inner">
+        <label class="checkbox">
+            <input type="checkbox" data-bind="checked: global_settings.settings.plugins.atxpihat.IO4Enabled" id="ATXHatIO4Enabled">Enabled(Default Off)</input>
+        </label>
+        <!-- ko if: global_settings.settings.plugins.atxpihat.IO4Enabled -->
+            <p>Note: DHT11/22/AM2302 -<a href="http://baprojectworkshop.com/support/installing-the-adafruit_dht-library" target="_blank">Requires AdaFruit Library</a>,
+                DS18B20 - <a href="http://baprojectworkshop.com/support/setting-up-1-wire-communications" target="_blank">requires one wire configuration</a> </p>
+            <div class="control-group">
+                <label class="control-label">Behaviour</label>
+                <div class="controls">
+                    <select data-bind="value: global_settings.settings.plugins.atxpihat.IO4Behaviour">
+                        <option value="FILAMENT3">Filament Sensor 3 Wire</option>
+                        <option value="FILAMENT2">Filament Sensor 2 Wire</option>
+                        <option value="DHT11">DHT11 Temp/Humidity</option>
+                        <option value="DHT22">DHT22 Temp/Humidity</option>
+                        <option value="DS18B20">DS18B20 Temprature</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- ko if: global_settings.settings.plugins.atxpihat.IO4Behaviour().startsWith("FILAMENT") -->
+            <label class="checkbox">
+                <input type="checkbox" data-bind="checked: global_settings.settings.plugins.atxpihat.DisplayFilamentStatusPanel" id="DisplayFilamentOnStatusPanel">Display on Status Panel(Default On)</input>
+            </label>
+            <label class="checkbox">
+                <input type="checkbox" data-bind="checked: global_settings.settings.plugins.atxpihat.FilamentSupressDialog" id="FilamentSupressDialog">Supress Warning Dialog (Default Off)</input>
+            </label>
+            <div class="control-group">
+                <label class="control-label">GCODE to send for filament change</label>
+                <div class="controls">
+                    <textarea rows="4" class="block" data-bind="value: global_settings.settings.plugins.atxpihat.FilamentChangeScript"></textarea>
+                </div>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Filament Empty State</label>
+                <div class="controls">
+                    <input type="number" min="0" max="1" class="input-mini" data-bind="value: global_settings.settings.plugins.atxpihat.FilamentEmptyState"></input>&nbsp;(Default 1)
+                </div>
+            </div>
+            <!-- /ko -->
+
+            <!-- ko if: !global_settings.settings.plugins.atxpihat.IO4Behaviour().startsWith("FILAMENT") -->
+            <label class="checkbox">
+                <input type="checkbox" data-bind="checked: global_settings.settings.plugins.atxpihat.DisplayTemperatureOnStatusPanel" id="DisplayTemperatureOnStatusPanel">Display on Status Panel(Default On)</input>
+            </label>
+            <div class="control-group">
+                <label class="control-label">Report Temp:</label>
+                <div class="controls">
+                    <select data-bind="value: global_settings.settings.plugins.atxpihat.TemperatureMeasurement">
+                        <option value="F">Fahrenheit</option>
+                        <option value="C">Celsius</option>
+                    </select>
+                </div>
+            </div>
+            <!-- /ko -->
+        <!-- /ko -->
+    </div>
+<!-- /ko -->
 
     <h4>Power Control/Monitor</h4>
     <div class="accordion-inner">
         <label class="checkbox">
-            <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.PowerOffWarning" id="ATXHatPowerOffWarning">Power Off Warning(Default On)</input>
+            <input type="checkbox" data-bind="checked: global_settings.settings.plugins.atxpihat.PowerOffWarning" id="ATXHatPowerOffWarning">Power Off Warning(Default On)</input>
+        </label>
+<!-- ko if: IsSmartBoard() -->
+        <label class="checkbox">
+            <input type="checkbox" data-bind="checked: global_settings.settings.plugins.atxpihat.MonitorPower" id="MonitorPower">Monitor Power(Default On)</input>
         </label>
         <label class="checkbox">
-            <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.DisplayPWROnStatusPanel" id="DisplayPWROnStatusPanel">Display on Status Panel(Default On)</input>
+            <input type="checkbox" data-bind="checked: global_settings.settings.plugins.atxpihat.DisplayPWROnStatusPanel" id="DisplayPWROnStatusPanel">Display on Status Panel(Default On)</input>
         </label>
+<!-- /ko -->
         <div class="control-group">
             <label class="control-label">On/Off GPIO Pin</label>
             <div class="controls">
-                <input type="number" min="0" class="input-mini" data-bind="value: settings.plugins.atxpihat.OnOffSwitchPin"></input>&nbsp;(Default 17)
+                <input type="number" min="0" class="input-mini" data-bind="value: global_settings.settings.plugins.atxpihat.OnOffSwitchPin"></input>&nbsp;(Default 17)
             </div>
         </div>
         <div class="control-group">
             <label class="control-label">On Sense Pin</label>
             <div class="controls">
-                <input type="number" min="0" class="input-mini" data-bind="value: settings.plugins.atxpihat.SenseOnOffPin"></input>&nbsp;(Default 18)
+                <input type="number" min="0" class="input-mini" data-bind="value: global_settings.settings.plugins.atxpihat.SenseOnOffPin"></input>&nbsp;(Default 18)
             </div>
         </div>
+<!-- ko if: IsSmartBoard() -->
         <div class="control-group">
             <label class="control-label">I2C address</label>
             <div class="controls">
-                <input type="text" class="input-mini" size="4" data-bind="value: settings.plugins.atxpihat.i2cAddress"></input>&nbsp;(Default 0x68)
+                <input type="text" class="input-mini" size="4" data-bind="value: global_settings.settings.plugins.atxpihat.i2cAddress"></input>&nbsp;(Default 0x68)
             </div>
         </div>
         <div class="control-group">
             <label class="control-label">I2C Bus</label>
             <div class="controls">
-                <input type="number" class="input-mini" min="1" max="2" data-bind="value: settings.plugins.atxpihat.i2cBus"></input>&nbsp;(Default 1)
+                <input type="number" class="input-mini" min="1" max="2" data-bind="value: global_settings.settings.plugins.atxpihat.i2cBus"></input>&nbsp;(Default 1)
             </div>
         </div>
         <div class="control-group">
             <label class="control-label">Reference Voltage</label>
             <div class="controls">
-                <input type="number" min="12.00" max="12.99" class="input-mini" data-bind="value: settings.plugins.atxpihat.ReferenceVoltage"></input>&nbsp;(Default 12.289)
+                <input type="number" min="12.00" max="12.99" class="input-mini" data-bind="value: global_settings.settings.plugins.atxpihat.ReferenceVoltage"></input>&nbsp;(Default 12.289)
             </div>
         </div>
         <div class="control-group">
             <label class="control-label">Max Amperage</label>
             <div class="controls">
-                <input type="number" min="1" max="19" class="input-mini" data-bind="value: settings.plugins.atxpihat.MaxAmperage"></input>&nbsp;(Default 19)
+                <input type="number" min="1" max="36" class="input-mini" data-bind="value: global_settings.settings.plugins.atxpihat.MaxAmperage"></input>
             </div>
         </div>
+<!-- /ko -->
     </div>
 
-    <h4>Fun Stuff</h4>
+    <h4>Fun Stuff - Experimental</h4>
     <div class="accordion-inner">
         <label class="checkbox">
-            <input type="checkbox" data-bind="checked: settings.plugins.atxpihat.RemoveLogo" id="ATXHatRemoveLogo">Remove the Octopus from the Grid(Default On)</input>
+            <input type="checkbox" data-bind="checked: global_settings.settings.plugins.atxpihat.RemoveLogo" id="ATXHatRemoveLogo">Remove the Octopus from the temperature grid(Default unchecked)</input>
+        </label>
+        <label class="checkbox">
+            <input type="checkbox" data-bind="checked: global_settings.settings.plugins.atxpihat.FilterTerminal" id="ATXHatFilterTerminal">Filter output terminal - Remove Temp/WaitDefault unchecked)</input>
         </label>
     </div>
 
