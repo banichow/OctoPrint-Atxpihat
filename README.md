@@ -1,5 +1,5 @@
 # OctoPrint-Atxpihat
-05/28/2018 - Version 1.1.0 - This version provides support for the new [ATXPiHat Zero](https://wp.me/p98gmw-bf). These will be available for sale very soon.
+05/28/2018 - Version 1.1.2 - This version provides support for the new [ATXPiHat Zero](https://wp.me/p98gmw-bf). These will be available for sale very soon.
 
 General Feature updates
 * Fully compatible with Octoprint 1.3.8 or greater.
