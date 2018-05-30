@@ -1,5 +1,5 @@
 # OctoPrint-Atxpihat
-05/28/2018 - Version 1.1.2 - This version provides support for the new [ATXPiHat Zero](https://wp.me/p98gmw-bf). These will be available (sale)[https://baprojectworkshop.com/shop].
+05/28/2018 - Version 1.1.2 - This version provides support for the new [ATXPiHat Zero](https://wp.me/p98gmw-bf). These will be available [sale](https://baprojectworkshop.com/shop).
 
 General Feature updates
 * Fully compatible with Octoprint 1.3.8 or greater.
@@ -13,7 +13,7 @@ ATXPiHat Zero updates - Please review all of the [feature differences](https://w
 * Added IO support – DHT11/22/AM2302/DS18B20/2 and 3 wire filament out sensors - These will be available for sale very soon.
 * EPO support prior to power up
 
-02/20/2018 - The boards are now available for [purchase at baprojectworkshop.com][https://baprojectworkshop.com/shop]. 
+02/20/2018 - The boards are now available for [purchase at baprojectworkshop.com](https://baprojectworkshop.com/shop). 
 
 Initial software release to support the [ATXPiHat](https://wp.me/p98gmw-7g) 1.0. A lot of the features below come disabled and are easily enabled on the settings tab. Here is the hardware/software features;
 
