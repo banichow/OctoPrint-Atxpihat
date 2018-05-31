@@ -16,7 +16,7 @@ __license__ = "Creative Commons Attribution-ShareAlike 4.0 International License
 __plugin_license__ = "Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/"
 __copyright__ = "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.com"
 __plugin_name__ = "ATXPiHat"
-__plugin_version__ = "1.1.2"
+__plugin_version__ = "1.1.3"
 __plugin_description__ = "ATXPiHat - https://baprojectworkshop.com"
 
 import RPi.GPIO as GPIO

@@ -6,7 +6,7 @@ from enum import Enum
 __author__ = 'Brian Anichowski'
 __license__ = "Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/"
 __copyright__ = "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.com"
-__version__ = "1.1.2"
+__version__ = "1.1.3"
 
 class SampleType(Enum):
 	Voltage = 1,
