@@ -1,26 +1,23 @@
 # OctoPrint-Atxpihat
 
+No more cutting up and soldering ATX power supplies for your 12v 3d printer applications. This is a Raspberry Pi Hat that makes the process of changing over to a ATX power supply from the underpowered cheap chinese models a breeze. Fully integrated with Octoprint via the provided plugin. 
+
 These are available for [sale at baprojectworkshop.com](https://baprojectworkshop.com/shop).
 
-05/31/2018 - Version 1.1.3
+6/17/2018 - Version 1.1.4
 
-General repair for Internet Explorer compatibility
-
-05/28/2018 - Version 1.1.2 - This version provides support for the new [ATXPiHat Zero](https://wp.me/p98gmw-bf). 
-
-General Feature updates
-* Fully compatible with Octoprint 1.3.8 or greater.
-* Auto sense which board is installed and changes the driver to accommodate it.
-* Refactored the ADC control software
-* Initial testing on a Pi Zero W - More work is pending
-
-At the time of development, we were unable to get the new Pi 3B+, this testing is pending.
+General Repairs
+* Full support for the [ATXPiHat v1](https://baprojectworkshop.com/product/atxpihat-atx-psu-interface-for-3d-printers/) and the [ATXPiHat Zero](https://baprojectworkshop.com/product/atxpihat-zero-atx-psu-interface-for-3d-printers/)
+* Worked out the installation and detection of the Adafruit DHT libraries for the DHT11/22/AM2302 temprature sensors
+* Consolidated the logging and enhanced integration
+* Slowed down the timers that update the browser
+* General clean up and misc bug fixes
+* Moved the startup code out of init to on_after_startup to make sure that I had a logging injected
+* Refined the installation documentation [help](https://baprojectworkshop.com/support/)
 
 ATXPiHat Zero updates - Please review all of the [feature differences](https://wp.me/p98gmw-bf)
-* Added IO support – DHT11/22/AM2302/DS18B20/2 and 3 wire filament out sensors - These will be available for sale very soon.
+* Added IO support – DHT11/22/AM2302/DS18B20/2 and 3 wire filament out sensors - These are all available for [sale](https://baprojectworkshop.com/shop).
 * EPO support prior to power up
-
-02/20/2018 - The boards are now available for [purchase at baprojectworkshop.com](https://baprojectworkshop.com/shop). 
 
 Initial software release to support the [ATXPiHat](https://wp.me/p98gmw-7g) 1.0. A lot of the features below come disabled and are easily enabled on the settings tab. Here is the hardware/software features;
 
@@ -40,10 +37,10 @@ Initial software release to support the [ATXPiHat](https://wp.me/p98gmw-7g) 1.0.
 * Automatic shutdown when an amperage threshold is reached. Meltdown protection
 * Switchable 12 or 5 v connector for controlling external items via GCODE
 
-This plugin is only supported on the Raspberry Pi 3, and has been tested on the Model B. At the time of development, we were unable to get any older version 3 boards for testing. Hardware setup images are/will be available on http://baprojectworkshop.com. Any requests for help, please use the [contact](https://baprojectworkshop.com/contact/) form for the quickest way to get help.
+This plugin is only supported on the Raspberry Pi 3, and has been tested on the Model B. Any requests for help, please use the [contact](https://baprojectworkshop.com/contact/) form for the quickest way to get help.
 
 ## Here is the standard disclaimer – you must understand and agree to this!
-Understand this, this board has **not** been tested by an independent lab such as UL, or anyone else. **You use it at your own risk**. Each board is shipped tested and should work properly out of the box. They are designed to work with a Raspberry Pi 3b and Zero. However, all the work has been done on Pi 3b’s. I will work hard with the user to make sure that everything is good, however like anything in the RepRap space, you are responsible if you burn you house down. **Never, and I mean never, use this board and or your printer unsupervised. I will not be held accountable for anything that happens while using this board. Again, use it at your own risk.**
+Understand this, this board has **not** been tested by an independent lab such as UL, or anyone else. **You use it at your own risk**. Each board is shipped tested and should work properly out of the box. They are designed to work with a Raspberry Pi 3b and Zero. However, all the work has been done on Pi 3b’s. I will work hard with the user to make sure that everything is good. **Never, and I mean never, use this board and or your printer unsupervised. I will not be held accountable for anything that happens while using this board. Again, use it at your own risk.**
 
 ## Installation
 
@@ -71,6 +68,8 @@ Do not install the plugin until you have completed the installation steps below;
         https://github.com/banichow/OctoPrint-Atxpihat/archive/master.zip
 
 * We found during our testing, it is a good idea to restart the Pi after installation or upgrade of the plugin. This will be the first thing that we will ask during any support requests.
+
+* There are additional application notes available on my [website]() that go into installation of the pigpio, Adafruit DHT, and 1 wire communications and how to install them on the standard jessie image provided by [Octoprint](https://octoprint.org).
 
 * After this, sign into Octoprint and start working with the board.
 

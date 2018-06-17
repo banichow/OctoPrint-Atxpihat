@@ -16,19 +16,22 @@ __license__ = "Creative Commons Attribution-ShareAlike 4.0 International License
 __plugin_license__ = "Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/"
 __copyright__ = "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.com"
 __plugin_name__ = "ATXPiHat"
-__plugin_version__ = "1.1.3"
+__plugin_version__ = "1.1.4"
 __plugin_description__ = "ATXPiHat - https://baprojectworkshop.com"
 
 import RPi.GPIO as GPIO
-import logging
+import inspect
 import sys
-import octoprint.plugin
-from octoprint.server import user_permission
-from octoprint.events import Events
+
 try:
 	import Adafruit_DHT
 except ImportError:
-	print 'no adafruit library'
+	print('ATXPiHat - not able to import/find Adafruit_DHT')
+
+import octoprint.plugin
+from octoprint.server import user_permission
+from octoprint.events import Events
+
 import pigpio
 import glob
 import time
@@ -55,38 +58,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 	def __init__(self):
 		self._settings = None
 		self._pigpiod = None
-
-		revision = GPIO.RPI_REVISION
-
-		loop = 0
-		# this whole thing is to deal with pigpiod not starting up in the correct order
-		# no matter what I did, update-rc.d would not give it to me in the right order.
-		while True:
-			loop += 1
-			try:
-				self._pigpiod = pigpio.pi()
-				if not self._pigpiod.connected:
-					raise SystemError
-				version = self._pigpiod.get_hardware_revision()
-
-				if revision != 2 and revision != 3:
-					self._mylogger('ATXPiHat only supports Type 3 boards', forceinfo=True)
-					raise EnvironmentError('ATXPiHat only supports Type 3 boards')
-				else:
-					self._mylogger('ATXPiHat BCM board is type - {}'.format(version), forceinfo=True)
-
-				break
-			except EnvironmentError:
-				raise
-			except:
-				self._mylogger('ATXPiHat - pigpiod is not started yet', forceinfo=True)
-				time.sleep(1)
-
-			if loop > 60:
-				self._mylogger('ATXPiHat - timed out waiting on pigpiod', forceinfo=True)
-				break
-
-
+		self._adafruitdhtavail = False
 		self._ledcolors = dict(LEDRed=None, LEDGreen=None, LEDBlue=None)
 		self._fanmonitor = None
 		self._adc = None
@@ -105,16 +77,18 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 
 	def _mylogger(self,message, forceinfo=False):			# this is to be able to change the logging without a large change
 
+		outmsg = "{} {}".format(inspect.stack()[1][3],message)
+
 		if self._settings is not None:
 			if self._settings.getBoolean(['debuglogging']) or forceinfo:
-				self._logger.info(message)
+				self._logger.info(outmsg)
 			else:
-				self._logger.debug(message)
+				self._logger.debug(outmsg)
 		else:
 			print(message)
 
 	def setLEDSvalues(self, workingleds, brightness):
-		self._mylogger("ATXPiHat setLEDSvalues() - {} - {}".format(workingleds,brightness))
+		self._mylogger("called - {} - {}".format(workingleds,brightness))
 
 		if self._settings.getBoolean(['UseLEDS']):
 			ledon = True
@@ -130,7 +104,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 				brightness = 1
 
 			pin = self._settings.getInt([newkey])
-			self._mylogger('ATXPiHat setLEDSvalues() {0} - {1} - {2} - {3}'.format(key, newkey, value, pin))
+			self._mylogger('{} - {} - {} - {}'.format(key, newkey, value, pin))
 
 			if not ledon or value < 0:
 				keyval = 0
@@ -142,13 +116,13 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 			self._pigpiod.set_PWM_dutycycle(pin, realBrightness)
 
 	def initialize_leds(self):
-		self._mylogger(u"ATXPiHat initialize_leds()")
+		self._mylogger("called")
 		if not self._smartboard:
-			self._mylogger("ATXPiHat initialize_leds() - not smartboard exit")
+			self._mylogger("not smartboard exit")
 			return
 
 		if not self.ispowered():
-			self._mylogger("ATXPiHat initialize_leds - not powered exiting")
+			self._mylogger("not powered exiting")
 			return
 
 		workleds = dict()
@@ -160,9 +134,9 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 
 	# this is needed to shutdown the driver fet TC4427 so that voltage leakage would not overheat the chips
 	def shutdown_driverfets(self):
-		self._mylogger(u"ATXPiHat shutdown_driverfets()")
+		self._mylogger("called")
 		if not self._smartboard:
-			self._mylogger("ATXPiHat shutdown_driverfets - not smartboard exit")
+			self._mylogger("not smartboard exit")
 			return
 
 		# shutdown the external switch
@@ -177,7 +151,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		self.setLEDSvalues(workleds, 0)
 
 	def on_event(self, event, payload):
-		self._mylogger("ATXPiHat - on_event called {} {}".format(event,payload))
+		self._mylogger("called {} {}".format(event,payload))
 
 		if event is Events.PRINTER_STATE_CHANGED:
 			if (payload["state_id"] == "OPEN_SERIAL" or payload["state_id"] == "DETECT_SERIAL") and not self.ispowered():
@@ -203,7 +177,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 				self.reportfilamentstate()
 
 	def turnon(self):
-		self._mylogger("ATXPiHat - turnon called")
+		self._mylogger("called")
 		epopin = self._settings.getInt(['EPOPin'])
 		useepo = self._settings.getBoolean(['UseEPO'])
 		onoffpin = self._settings.getInt(['OnOffSwitchPin'])
@@ -219,7 +193,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 				self.baseline()
 				self._adc.resetchip()
 			else:
-				self._mylogger("ATXPiHat - turnon - Not monitoring power")
+				self._mylogger("Not monitoring power")
 
 			self._pigpiod.write(onoffpin, 1)  # Turn on ps
 
@@ -232,7 +206,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 
 			# this is to support the ATXPiHatV1
 			if useepo and not self._pigpiod.read(epopin):
-				self._mylogger('ATXPiHat - turnon called - EPO is pressed')
+				self._mylogger('EPO is pressed')
 				self._pigpiod.write(onoffpin, 0)  # Turn off ps
 				self.setepostatus(True)
 				return
@@ -251,10 +225,10 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 			self.sendmessage("refreshconnection",None)
 
 	def turnoff(self, forceoff=False):
-		self._mylogger('ATXPiHat - turnoff called')
+		self._mylogger('called')
 
 		if not self._pigpiod.connected:
-			self._mylogger(u"ATXPiHat turnoff - pigpio is no longer connected", forceinfo=True)
+			self._mylogger("pigpio is no longer connected", forceinfo=True)
 			self._pigpiod = pigpio.pi()
 
 		if self.ispowered() == 1:
@@ -271,39 +245,38 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 					time.sleep(1)
 
 			self._pigpiod.write(self._settings.getInt(['OnOffSwitchPin']), 0)  # Turn off ps
-			time.sleep(2)
+			time.sleep(8)		#wait for the printer to come down before looking at the amperage results.
 			self.initialize_power()
 			self.reportfilamentstate()
 
 		self.sendmessage("refreshconnection")
 
 	def check_psu_state(self):
-		#self._mylogger("ATXPiHat check_psu_state called")
+		#self._mylogger("check_psu_state called")
 
 		if not self._pigpiod.connected:
-			self._mylogger("ATXPiHat - pigpio is no longer connected", forceinfo=True)
+			self._mylogger("pigpio is no longer connected", forceinfo=True)
 			self._pigpiod = pigpio.pi()
 
 		retval = "true" if self.ispowered() else "false"
-		#self._mylogger("ATXPiHat - check_psu_state - {}".format(retval))
 		self.sendmessage("pwrstatus", retval)
 
 	def ispowered(self):
 		if not self._pigpiod.connected:
-			self._mylogger(u"ATXPiHat - pigpio is no longer connected", forceinfo=True)
+			self._mylogger("pigpio is no longer connected", forceinfo=True)
 			self._pigpiod = pigpio.pi()
 
 		sensepwrpin = self._pigpiod.read(self._settings.getInt(['SenseOnOffPin']))
 		return True if sensepwrpin == 1 else False
 
 	def initialize_extswitch(self):
-		self._mylogger("ATXPiHat initialize_extswitch")
+		self._mylogger("called")
 		if not self._smartboard:
-			self._mylogger("ATXPiHat initialize_extswitch - not smartboard exit")
+			self._mylogger("not smartboard exit")
 			return
 
 		if not self.ispowered():
-			self._mylogger("ATXPiHat initialize_extswitch - not powered exiting")
+			self._mylogger("not powered exiting")
 			return
 
 		extswtpin = self._settings.getInt(['ExternalSwitchPin'])
@@ -329,7 +302,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 				elif pwmvalue < 0:
 					pwmvalue = 0
 
-				self._mylogger(u"Ext Switch pwmcycle %s " % pwmvalue)
+				self._mylogger("Ext Switch pwmcycle %s " % pwmvalue)
 				# InitExtSwitchOn
 				if actualstate:
 					self._pigpiod.set_PWM_dutycycle(extswtpin, pwmvalue)
@@ -342,9 +315,9 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 			self._pigpiod.write(extswtpin, 0)
 
 	def toggle_extswitch(self, forceoff=False):
-		self._mylogger("ATXPiHat toggle_extswitch called",True)
+		self._mylogger("called",True)
 		if not self._smartboard:
-			self._mylogger("ATXPiHat toggle_extswitch - not smartboard exit")
+			self._mylogger("not smartboard exit")
 			return
 
 		extswtpin = self._settings.getInt(['ExternalSwitchPin'])
@@ -375,13 +348,13 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 					if pwmvalue > 255:
 						pwmvalue = 255
 
-				self._mylogger(u"Ext Switch pwmcycle %s " % pwmvalue)
+				self._mylogger("Ext Switch pwmcycle %s " % pwmvalue)
 				self._pigpiod.set_PWM_dutycycle(extswtpin, pwmvalue)
 
 	def update_extswitchstate(self):
-		self._mylogger("ATXPiHat update_extswitchstate called")
+		self._mylogger("called")
 		if not self._smartboard:
-			self._mylogger("ATXPiHat update_extswitchstate - not smartboard exit")
+			self._mylogger("not smartboard exit")
 			return
 
 		extswtpin = self._settings.getInt(['ExternalSwitchPin'])
@@ -407,7 +380,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 	def initialize_epo(self):
 		# due to design, I cannot sense the EPO pin properly until 12v is applied to the board
 		# this is just setting the port up
-		self._mylogger("ATXPiHat initialize_epo")
+		self._mylogger("called")
 		epopin = self._settings.getInt(['EPOPin'])
 		if self._eporisecallback is not None:
 			self._eporisecallback.cancel()
@@ -419,7 +392,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		self._eporisecallback = self._pigpiod.callback(epopin, pigpio.EITHER_EDGE, self.epostatechange)
 
 	def epostatechange(self, gpio, level, tick):
-		self._mylogger("ATXPiHat epostatechange")
+		self._mylogger("called")
 
 		sensepwrpin = self._settings.getInt(['SenseOnOffPin'])
 		if self._smartboard and self._pigpiod.read(sensepwrpin) == 0:
@@ -429,24 +402,24 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 
 		if self._settings.getInt(['UseEPO']):
 			if currentepostate == 0:
-				self._mylogger("ATXPiHat - EPO Pressed", forceinfo=True)
+				self._mylogger("EPO Pressed", forceinfo=True)
 				self.setepostatus(True)
 
 				if self._pigpiod.read(sensepwrpin) == 1:
 					self.turnoff(True)
 
 			elif currentepostate == 1:
-				self._mylogger("ATXPiHat - EPO released", forceinfo=True)
+				self._mylogger("EPO released", forceinfo=True)
 				self.setepostatus(False)
 
 	def setepostatus(self, currentstate):
 		#true = engaged or 0
 		#false = normal or 1
-		self._mylogger("ATXPiHat set_epo_status %s" % currentstate)
+		self._mylogger("{}".format(currentstate))
 		self.sendmessage("epoengaged",'true' if currentstate else 'false',"")
 
 	def initialize_fan(self):
-		self._mylogger("ATXPiHat Initialize_fan called")
+		self._mylogger("called")
 		self._fanworking = 0
 		if self._fanmonitor is not None:			# failsafe to make sure that everything is good.
 			self._fanmonitor.cancel()
@@ -454,7 +427,6 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		self._fanmonitor = MonitorPWM.MonitorPWM(self._pigpiod, self._settings.getInt(['FanRPMPin']), self._mylogger)
 
 	def check_fan_state(self):
-		#self._mylogger("ATXPiHat check_fan_state called")
 		rpm = 0.0
 
 		if not self._pigpiod.connected:
@@ -468,7 +440,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 			rpm = 0
 			if self._fanmonitor is not None:
 				rpm = self._fanmonitor.rpm()
-				self._mylogger("ATXPiHat check_fan_state - rpm %s" % rpm)
+				self._mylogger("rpm {}".format(rpm))
 				self.sendmessage("fanrpm", rpm)
 
 				if rpm < 1:						# This allows for three cycles before actually checking the fan
@@ -486,7 +458,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 					self.turnoff()
 
 	def baseline(self):
-		self._mylogger("ATXPiHat baseline")
+		self._mylogger("called")
 		if not self._smartboard:
 			return
 
@@ -498,22 +470,22 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 			for i in range(0, 6):
 				sample.append(self._adc.read_amperage_baseline())
 
-			self._mylogger("ATXPiHat ampbaseline - {}".format(sample))
+			self._mylogger("ampbaseline - {}".format(sample))
 			self._ampbaseline = ATXPiHat._processsamples(sample)
-			self._mylogger('ATXPiHat Amperage Baseline {}'.format(self._ampbaseline))
+			self._mylogger('Amperage Baseline {}'.format(self._ampbaseline))
 		else:
-			self._mylogger("ATXPiHat baseline - Not monitoring power")
+			self._mylogger("Not monitoring power")
 
 		self.sendmessage("ampbaselinecomp")
 
 	def initialize_power(self):
-		self._mylogger("ATXPiHat initialize_power")
+		self._mylogger("called")
 
 		if self._checkVoltageTimer is not None:
 			self._checkVoltageTimer.cancel()
 
 		if not self._smartboard:
-			self._mylogger("ATXPiHat initialize_power - not smartboard exit")
+			self._mylogger("not smartboard exit")
 			return
 
 		self._pigpiod.set_mode(self._settings.getInt(['OnOffSwitchPin']), pigpio.OUTPUT)  	# on/off
@@ -528,7 +500,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		if self._settings.getBoolean(['MonitorPower']):
 			self._checkVoltageTimer = ATXPiHat._settimer(self._checkVoltageTimer, self._settings.getInt(['ProcessTimer']), self.process_voltage)
 		else:
-			self._mylogger("ATXPiHat initialize_power - Not monitoring power")
+			self._mylogger("Not monitoring power")
 
 	@staticmethod
 	def _processsamples(listobj):
@@ -542,9 +514,9 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		return sum(cleanlist) / float(len(cleanlist))
 
 	def process_voltage(self):
-		self._mylogger("ATXPiHat process_voltage - called")
+		self._mylogger("called")
 		if not self._smartboard:
-			self._mylogger("ATXPiHat process_voltage - not smartboard exit")
+			self._mylogger("not smartboard exit")
 			return
 
 		self._adc.resetchip()
@@ -554,7 +526,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 			sample.append(self._adc.read_amperage(self._ampbaseline))
 
 		amperage = round(ATXPiHat._processsamples(sample),3)
-		self._mylogger("ATXPiHat process_voltage - amp sample {}".format(amperage))
+		self._mylogger("amp sample {}".format(amperage))
 
 		if self.ispowered():
 			if amperage > self._settings.getInt(['MaxAmperage']):
@@ -572,7 +544,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 				return
 		else:
 			if self._rebaseline > 200:
-				self._mylogger("ATXPiHat process_voltage - no power - rebaseline ")
+				self._mylogger("no power - rebaseline ")
 				self.baseline()
 				self._rebaseline = 0
 
@@ -580,28 +552,75 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 			self._rebaseline += 1
 
 		voltage =  round(self._adc.read_voltage(self._settings.getFloat(['ReferenceVoltage'])),3)
-		self._mylogger("ATXPiHat process_voltage - volt sample %s " % voltage)
+		self._mylogger("volt sample %s " % voltage)
 
 		self.sendmessage("atxvolts", amperage, voltage)
 
 	def on_after_startup(self):
 		self._mylogger("Starting ATXPiHatPlugin", forceinfo=True)
 
-		if not self._pigpiod.connected:
-			self._pigpiod = pigpio.pi()
+		if self._settings.getInt(['ProcessTimer']) < 4:
+			self._settings.setInt(['ProcessTimer'],4)
+
+		revision = GPIO.RPI_REVISION
+		loop = 0
+		self._mylogger('Connecting to pigpio......', forceinfo=True)
+		# this whole thing is to deal with pigpiod not starting up in the correct order
+		# no matter what I did, update-rc.d would not give it to me in the right order.
+		while True:
+			loop += 1
+			try:
+				self._pigpiod = pigpio.pi()
+				if not self._pigpiod.connected:
+					raise SystemError
+				version = self._pigpiod.get_hardware_revision()
+				self._mylogger('Connecting to pigpio complete', forceinfo=True)
+
+				if revision != 2 and revision != 3:
+					self._mylogger('ATXPiHat only supports Type 3 boards', forceinfo=True)
+					raise EnvironmentError('ATXPiHat only supports Type 3 boards')
+				else:
+					self._mylogger('BCM board is type - {}'.format(version), forceinfo=True)
+
+				break
+			except EnvironmentError:
+				raise
+			except:
+				self._mylogger('pigpiod is not started yet', forceinfo=True)
+				time.sleep(1)
+
+			if loop > 60:
+				self._mylogger('timed out waiting on pigpiod', forceinfo=True)
+				break
+
+		# test for the ADAFruit Library
+		self._mylogger('Looking for the ADAFruit Library', forceinfo=True)
+		self._mylogger("loaded module {}".format(sys.modules));
+
+		for key, value in sys.modules.items():
+
+			if key.upper().startswith('ADAFRUIT'):
+				self._mylogger('Found ADAFruit Library', forceinfo=True)
+				self._adafruitdhtavail = True
+				break
+
+		if self._adafruitdhtavail is False:
+			self._mylogger('ADAFruit Library is not found', forceinfo=True)
+
 
 		self.detectsmartboard()
 		self.initialize_all()
 
 	def detectsmartboard(self):
+		self._mylogger("called")
 		addr = int(self._settings.get(['i2cAddress']),16)
 		busaddr = self._settings.getInt(['i2cBus'])
 
 		if addr != 0x68:
-			self._mylogger("Starting ATXPiHatPlugin - default i2cAddress is not 0x68", forceinfo=True)
+			self._mylogger("default i2cAddress is not 0x68", forceinfo=True)
 
 		if busaddr != 1:
-			self._mylogger("Starting ATXPiHatPlugin - default i2cBus is not 1", forceinfo=True)
+			self._mylogger("default i2cBus is not 1", forceinfo=True)
 
 		self._smartboard = ADCProcessor.detectaddress(self._mylogger,  addr, busaddr)
 
@@ -618,7 +637,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 			self._settings.set(['UseExtSwitch'], True)
 			self._settings.set(['MaxAmperage'], 19)
 
-		self._mylogger('ATXPiHat - smart device {}'.format('True' if self._smartboard else 'False'))
+		self._mylogger('smart device {}'.format('True' if self._smartboard else 'False'))
 
 	@staticmethod
 	def _settimer(timervar, timeval, methodcall, smartboard = True):
@@ -634,7 +653,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		return worktimer
 
 	def initialize_all(self):
-
+		self._mylogger("called")
 		processtimer = self._settings.getInt(['ProcessTimer'])
 		# Power status monitor
 		self._checkPSUTimer = ATXPiHat._settimer(self._checkPSUTimer,processtimer, self.check_psu_state)
@@ -646,7 +665,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		self._checkFanTimer = ATXPiHat._settimer(self._checkFanTimer, processtimer, self.check_fan_state, self._settings.getBoolean(['MonitorFanRPM']))
 
 		if self._smartboard:
-			self._mylogger("initialize_all - enabling smart devices")
+			self._mylogger("enabling smart devices")
 
 			if self.ispowered():
 				# external LEDS and switch setup
@@ -662,7 +681,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 			self.initializeIO4()
 
 	def get_settings_defaults(self):
-		self._mylogger("ATXPiHat get_settings_default()")
+		self._mylogger("called")
 		return dict(BoardVersion="1.00",
 					LEDRed=0,
 					LEDGreen=0,
@@ -711,15 +730,15 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 					FilterTerminal=False)
 
 	def on_settings_save(self, data):
-		self._mylogger(u"ATXPiHat on_settings_save()")
+		self._mylogger("called")
 		# Cannot update the screen faster than every 2 seconds
 		# The amperage and voltage readings can take some time to come back
 		octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
 
-		self._mylogger(u"ATXPiHat on_settings_save() before - Processtimer %s" % self._settings.getInt(['ProcessTimer']))
-		if self._settings.getInt(['ProcessTimer']) < 2:
-			self._settings.setInt(['ProcessTimer'],2)
-		self._mylogger(u"ATXPiHat on_settings_save() after - Processtimer %s" % self._settings.getInt(['ProcessTimer']))
+		self._mylogger("before - Processtimer %s" % self._settings.getInt(['ProcessTimer']))
+		if self._settings.getInt(['ProcessTimer']) < 4:
+			self._settings.setInt(['ProcessTimer'],4)
+		self._mylogger("after - Processtimer %s" % self._settings.getInt(['ProcessTimer']))
 
 		# with newer board variations we will have to figure out how to detect this to set the upper limit
 		maxamp = self._settings.getInt(['MaxAmperage'])
@@ -733,24 +752,24 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 
 		self.detectsmartboard()
 		self.initialize_all()
-		self._mylogger(u"ATXPiHat on_settings_save() - calling updatestatusbox")
+		self._mylogger("calling updatestatusbox")
 		self.sendmessage("updatestatusbox")
 
 		if self.ispowered():
-			self._mylogger(u"ATXPiHat on_settings_save() - calling FilterTerminal")
+			self._mylogger("calling FilterTerminal")
 			self.sendmessage("filterterminal",'true' if self._settings.getBoolean(['FilterTerminal']) else 'false')
 
 		if self._smartboard or not self._settings.getBoolean(['IO4Enabled']):
 			self.sendmessage(self._identifier, "removetemp")
 
-		self._mylogger(u"ATXPiHat on_settings_save() - calling backgroundimage")
+		self._mylogger("calling backgroundimage")
 		self.sendmessage("backgroundimage",'true' if self._settings.getBoolean(['RemoveLogo']) else 'false')
 
 	def sendmessage(self, message, extfield1=None, extfield2=None):
 		self._plugin_manager.send_plugin_message(self._identifier,dict(msg=message,field1=extfield1,field2=extfield2))
 
 	def get_template_configs(self):
-		self._mylogger(u"ATXPiHat get_template_configs()")
+		self._mylogger("called")
 		return [
 			dict(type='settings', custom_bindings=True, template='atxpihat_settings.jinja2'),
 			dict(type='navbar', custom_bindings=True, template='atxpihat_navbar_epo.jinja2'),
@@ -759,7 +778,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		]
 
 	def get_api_commands(self):
-		self._mylogger(u"ATXPiHat get_api_command()")
+		self._mylogger("called")
 		return dict(
 			updateLED=['LEDRed', 'LEDGreen', 'LEDBlue', 'LEDBrightness'],
 			updateExtSwitch=['ExternalSwitchValue'],
@@ -771,9 +790,10 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		)
 
 	def on_api_command(self, command, data):
-		self._mylogger(u"ATXPiHat on_api_command() - %s" % command, forceinfo=True)
+		self._mylogger("called - {}".format(command), forceinfo=True)
 
 		if not user_permission.can():
+			self._mylogger("Insufficient rights {}".format(command), forceinfo=True)
 			return make_response("Insufficient rights", 403)
 
 		cmd = command.lower()
@@ -820,24 +840,24 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 				self.initialize_leds()
 
 	def on_shutdown(self):
-		self._mylogger(u"ATXPiHat shutdown", forceinfo=True)
+		self._mylogger("called", forceinfo=True)
 
 		self.turnoff(True)
 		self._pigpiod.stop()
 
 	def get_assets(self):
-		self._mylogger(u"ATXPiHat get_assets()")
+		self._mylogger("called")
 		return dict(
 			js=["js/atxpihat.js"],
 			css=["css/atxpihat.css"]
 		)
 
 	def get_settings_version(self):
-		self._mylogger(u"ATXPiHat get_settings_version()")
+		self._mylogger("called")
 		return 2
 
 	def processfilamentevent(self, gpio, level, tick):
-		self._mylogger(u"ATXPiHat processfilamentevent result {} == OK state {}".format(level, self._settings.getInt(['FilamentEmptyState'])))
+		self._mylogger("called result {} == OK state {}".format(level, self._settings.getInt(['FilamentEmptyState'])))
 		if self._smartboard and self._filamentdetect is not None:
 			self._filamentdetect.cancel()
 			self._filamentdetect = None
@@ -853,7 +873,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		self.reportfilamentstate()
 
 	def reportfilamentstate(self, dialog=True):
-		self._mylogger(u"ATXPiHat reportfilamentstate")
+		self._mylogger("called")
 
 		if self._smartboard or not self._settings.getBoolean(['IO4Enabled']):
 			return
@@ -886,11 +906,11 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 				else:
 					state = "outnodialog"
 
-			self._mylogger(u"ATXPiHat reportfilamentstate - power ({}), msg ({}), suppress ({}), ioporttype ({})".format(power,msg,suppress,ioporttype))
+			self._mylogger("power ({}), msg ({}), suppress ({}), ioporttype ({})".format(power,msg,suppress,ioporttype))
 			self.sendmessage("filamentstatus", state)
 
 	def hasfilament(self):
-		self._mylogger(u"ATXPiHat hasfilament")
+		self._mylogger("called")
 		ioporttype = self._settings.get(['IO4Behaviour']).upper()
 
 		if self._smartboard or (not self._settings.getBoolean(['IO4Enabled']) and not ioporttype.startswith('FILAMENT')):
@@ -901,19 +921,19 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 
 		try:
 			if not self._pigpiod.connected:
-				self._mylogger("ATXPiHat - pigpio is no longer connected", forceinfo=True)
+				self._mylogger("pigpio is no longer connected", forceinfo=True)
 				self._pigpiod = pigpio.pi()
 
 			return True if self._settings.getInt(['FilamentEmptyState']) == self._pigpiod.read(ATXPiHat.IO4) else False
 		except:
-			self._mylogger("ATXPiHat - hasfilment - some sort of error {}".format(sys.exc_info()[0]), forceinfo=True)
+			self._mylogger("some sort of error {}".format(sys.exc_info()[0]), forceinfo=True)
 			return True
 
 	def initializeIO4(self):
-		self._mylogger(u"ATXPiHat initializeIO4")
+		self._mylogger("called")
 
 		if self._smartboard:
-			self._mylogger(u"ATXPiHat IO4 not supported on current 1.0 smartboard")
+			self._mylogger("IO4 not supported on current 1.0 smartboard")
 			return
 
 		if self._filamentdetect is not None:
@@ -923,12 +943,16 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		if self._checkDSTimer is not None:
 			self._checkDSTimer.cancel()
 
+		if self._adafruitdhtavail is False:
+			self._settings.setBoolean(['IO4Enabled'],False)
+			return
+
 		if not self._settings.getBoolean(['IO4Enabled']):
-			self._mylogger(u"ATXPiHat initializeIO4 is disabled")
+			self._mylogger("IO4 is disabled")
 			return
 
 		behaviour = self._settings.get(['IO4Behaviour']).upper()
-		self._mylogger(u"ATXPiHat initializeIO4 - Configuration Type {}".format(behaviour))
+		self._mylogger("Configuration Type {}".format(behaviour))
 
 		if behaviour.startswith('FILAMENT'):
 			self._pigpiod.set_mode(ATXPiHat.IO4, pigpio.INPUT)
@@ -936,33 +960,33 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 			self.reportfilamentstate()
 			self._filamentdetect = self._pigpiod.callback(ATXPiHat.IO4, pigpio.EITHER_EDGE, self.processfilamentevent)
 		elif behaviour.startswith('DHT'):
-			if self.checkonadafruitlib():
+			if self._adafruitdhtavail:
 				self._checkDHTTimer = ATXPiHat._settimer(self._checkDHTTimer, self._settings.getInt(['ProcessTimer']), self.process_dhttemp)
 		elif behaviour.startswith('DS18B20'):
 			self._checkDSTimer = ATXPiHat._settimer(self._checkDSTimer, self._settings.getInt(['ProcessTimer']), self.process_dstemp)
 
-	def checkonadafruitlib(self):
-		if 'Adafruit_DHT' not in sys.modules:
-			self._mylogger(u"ATXPiHat initializeIO4 Adafruit_DHT library is not available - Not initializing DHT Sensors", True)
-			self._settings.setBoolean(['IO4Enabled'], False)
-			return False
-		else:
-			return True
-
 	def process_dhttemp(self):
-		self._mylogger(u"ATXPiHat process_dhttemp")
 
-		if self.checkonadafruitlib() is False:
+		if not self._pigpiod.connected:
+			return
+
+		if not self.ispowered():			#if no power move on
+			self.sendmessage("updatetemp", "N/A", "N/A")
+			return
+
+		if self._adafruitdhtavail is False:
+			self._mylogger('checkonadafruitlib returned a false', forceinfo=True)
 			return
 
 		behaviour = self._settings.get(['IO4Behaviour']).upper()
+		self._mylogger("behavior {}".format(behaviour))
 
 		if behaviour == "DHT11":
 			sensor = Adafruit_DHT.DHT11
 		elif behaviour == "DHT22":
 			sensor = Adafruit_DHT.DHT22
 		else:
-			self._mylogger(u"ATXPiHat process_dhttemp - invalid type {}".format(behaviour))
+			self._mylogger("invalid type {}".format(behaviour))
 			return
 
 		if self.ispowered():
@@ -971,7 +995,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 			humidity = 0.0
 			temperature = 0.0
 
-		self._mylogger(u"ATXPiHat process_dhttemp - temp {} humidity {}".format(temperature,humidity))
+		self._mylogger("temp {} humidity {}".format(temperature,humidity))
 
 		forc = self._settings.get(['TemperatureMeasurement']).upper()
 		if forc == "F" and temperature > 0.0:
@@ -992,7 +1016,7 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 		else:
 			hum = "N/A"
 
-		self._mylogger(u"ATXPiHat process_dhttemp - final - temp {} humidity {}".format(temp, hum))
+		self._mylogger("final - temp {} humidity {}".format(temp, hum))
 		self.sendmessage("updatetemp", temp, hum)
 
 	@staticmethod
@@ -1006,50 +1030,57 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 			return None
 
 	def process_dstemp(self):
-		self._mylogger(u"ATXPiHat process_dstemp")
 
 		if self.ispowered():
 			device = glob.glob( ATXPiHat.DEVICEDIR + '28*')
 			if len(device) < 1:
-				self._mylogger(u"ATXPiHat process_dstemp - Sensor is not found in {}".format(ATXPiHat.DEVICEDIR))
+				self._mylogger("Sensor is not found in {}".format(ATXPiHat.DEVICEDIR))
 				return
 			elif len(device) > 1:
-				self._mylogger(u"ATXPiHat process_dstemp - more that one sensor was found {}".format(device))
+				self._mylogger("more that one sensor was found {}".format(device))
 				return
 
-			self._mylogger(u"ATXPiHat process_dstemp - Processing data from {}".format(device[0]))
+			self._mylogger("Processing data from {}".format(device[0]))
 			lines = ATXPiHat.read_ds_temp_raw(device[0])
 			if lines is None:
-				self._mylogger(u"ATXPiHat process_dstemp - returned nothing from the {}".format(device[0]))
+				self._mylogger("returned nothing from the {}".format(device[0]))
 				return
 
-			self._mylogger(u"ATXPiHat process_dstemp - temp raw {}".format(lines))
-			while lines[0].strip()[-3:] != 'YES':
-				time.sleep(0.2)
-				lines = ATXPiHat.read_ds_temp_raw(device[0])
+			self._mylogger("temp raw {}".format(lines))
 
-			equals_pos = lines[1].find('t=')
+			try:
+				equals_pos = -1
+				count = 40
+				while lines[0].strip()[-3:] != 'YES' and count > 0: # 8 seconds max loop to get value
+					count = count - 1
+					time.sleep(0.2)
+					lines = ATXPiHat.read_ds_temp_raw(device[0])
+			except:
+				count = 0
+				self._mylogger("Error during reading of 1 wire read")
+
+			if count > 0:
+				equals_pos = lines[1].find('t=')
 
 			if equals_pos != -1:
 				forc = self._settings.get(['TemperatureMeasurement']).upper()
 				temperature = float(lines[1][equals_pos + 2:])
-				self._mylogger(u"ATXPiHat process_dstemp - temp {}".format(temperature))
+				self._mylogger("temp {}".format(temperature))
 				temperature = (temperature / 1000.0)
 				if forc == "F" and temperature > 0.0:
 					temperature = temperature * 1.8 + 32.0
 
+				self._mylogger("temp {}".format(temperature))
 			else:
-				self._mylogger(u"ATXPiHat process_dstemp - no value returned")
-				return
-
-			self._mylogger(u"ATXPiHat process_dstemp - temp {}".format(temperature))
+				temperature = 0.0
+				self._mylogger("no value returned")
 
 			if temperature > 0.0:
 				temp = "{0:.2f}".format(round(temperature,2))
 			else:
 				temp = "N/A"
 
-			self._mylogger(u"ATXPiHat process_dstemp - final - temp {}".format(temp))
+			self._mylogger("final - temp {}".format(temp))
 		else:
 			temp = 'N/A'
 
@@ -1058,7 +1089,6 @@ class ATXPiHat(octoprint.plugin.AssetPlugin,
 
 	def HandleMarlin(self, comm_instance, phase, cmd, cmd_type, gcode, *args, **kwargs):
 		name = 'ATXPiHat HandleMarlin'
-		#self._mylogger('{} - called'.format(name))
 		if not self._smartboard or not self.ispowered():
 			return
 
