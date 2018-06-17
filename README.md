@@ -69,7 +69,7 @@ Do not install the plugin until you have completed the installation steps below;
 
 * We found during our testing, it is a good idea to restart the Pi after installation or upgrade of the plugin. This will be the first thing that we will ask during any support requests.
 
-* There are additional application notes available on my [website]() that go into installation of the pigpio, Adafruit DHT, and 1 wire communications and how to install them on the standard jessie image provided by [Octoprint](https://octoprint.org).
+* There are additional application notes available on my [website](https://baprojectworkshop.com/support/) that go into installation of the pigpio, Adafruit DHT, and 1 wire communications and how to install them on the standard jessie image provided by [Octoprint](https://octoprint.org).
 
 * After this, sign into Octoprint and start working with the board.
 
