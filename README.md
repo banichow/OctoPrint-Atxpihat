@@ -8,7 +8,7 @@ These are available for [sale at baprojectworkshop.com](https://baprojectworksho
 
 General Repairs
 * Full support for the [ATXPiHat v1](https://baprojectworkshop.com/product/atxpihat-atx-psu-interface-for-3d-printers/) and the [ATXPiHat Zero](https://baprojectworkshop.com/product/atxpihat-zero-atx-psu-interface-for-3d-printers/)
-* Worked out the installation and detection of the Adafruit DHT libraries for the DHT11/22/AM2302 temprature sensors
+* Worked out the installation and detection of the Adafruit DHT libraries for the DHT11/22/AM2302 temperature sensors
 * Consolidated the logging and enhanced integration
 * Slowed down the timers that update the browser
 * General clean up and misc bug fixes
