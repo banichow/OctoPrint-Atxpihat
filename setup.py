@@ -4,7 +4,7 @@
 plugin_identifier = "atxpihat"
 plugin_package = "octoprint_atxpihat"
 plugin_name = "OctoPrint-Atxpihat"
-plugin_version = "1.1.4"
+plugin_version = "1.1.5"
 plugin_description = """Octoprint Plugin for the ATXPiHat board"""
 plugin_author = "Brian Anichowski"
 plugin_author_email = "banichow@hotmail.com"
