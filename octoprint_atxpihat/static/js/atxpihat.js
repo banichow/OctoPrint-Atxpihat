@@ -2,7 +2,7 @@
 author - "Brian Anichowski"
 license - "Creative Commons Attribution-ShareAlike 4.0 International License - http://creativecommons.org/licenses/by-sa/4.0/"
 copyright - "Copyright (C) 2018 Brian Anichowski http://www.baprojectworkshop.com"
-version 1.1.4 - 06/17/2018
+version 1.1.5 - 06/17/2018
 
 # **************** Contribution libraries and exampled **********************************
 # ATXPiHat Hardware - Steve Smith - Xygax - https://www.facebook.com/Xygax
