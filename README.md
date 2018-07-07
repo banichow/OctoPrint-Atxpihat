@@ -1,3 +1,5 @@
+Notice!: I am aware of the installation of the ATXPiHat plugin with 1.3.8 Octoprint. I am working on a solution. I apologize for the issue, there is some sort of issue with PIP and the installer is failing on the smbus2 library which is a prerequisite of the plugin. 
+
 # OctoPrint-Atxpihat
 
 No more cutting up and soldering ATX power supplies for your 12v 3d printer applications. This is a Raspberry Pi Hat that makes the process of changing over to a ATX power supply from the underpowered cheap chinese models a breeze. Fully integrated with Octoprint via the provided plugin. 
