@@ -46,12 +46,21 @@ Understand this, this board has **not** been tested by an independent lab such a
 
 ## Installation
 
+For the most up to date instruction, please refer to [https://baprojectworkshop.com/support/installation-instructions/](https://baprojectworkshop.com/support/installation-instructions/)!
+
 Do not install the plugin until you have completed the installation steps below;
 * After you backup the memory chip for the PI, **(Just do it)**
 * It is always good to update the Raspbian image prior to any upgrade. From a terminal prompt;
 
+        cd ~
         sudo apt-get update
         sudo apt-get dist-upgrade
+        sudo apt-get install build-essential python-dev
+        curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+        sudo python get-pip.py
+        sudo pip install --upgrade setuptools
+        sudo ~/oprint/bin/pip install --upgrade pip
+        sudo ~/oprint/bin/pip install --upgrade setuptools
 
 * After completion, go ahead power down the PI and install the board. **Do not just power it off**,
 
